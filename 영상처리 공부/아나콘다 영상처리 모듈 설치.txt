@@ -1,0 +1,8 @@
+conda install -c conda-forge opencv
+¤¤ https://github.com/conda/conda/issues/2448
+
+conda install --channel conda-forge pillow=5
+¤¤ https://stackoverflow.com/questions/46717354/how-to-install-pil-on-spyderanaconda-3
+
+conda install -c conda-forge scikit-image
+¤¤ http://scikit-image.org/docs/dev/install.html
