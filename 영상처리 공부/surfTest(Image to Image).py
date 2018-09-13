@@ -17,8 +17,8 @@ import matplotlib.pyplot as plt
 
 GOOD_MATCH_PERCENT = 0.02
 
-searchImgName = "picture_art_d.jpg"
-backImgName = "frame.png"
+searchImgName = "image/picture_art_d.jpg"
+backImgName = "image/frame.png"
 
 searchImg = cv2.imread(searchImgName, 0)
 backImg = cv2.imread(backImgName, 0)
