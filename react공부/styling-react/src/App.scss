@@ -1,0 +1,30 @@
+@import 'utils';
+
+.box {
+  display: inline-block;
+  width: $size;
+  height: $size;
+  border: 1px solid black;
+  position:fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+
+  &.blue {
+    background:blue;
+  }
+
+  &:hover{
+    background:red;
+  }
+  &:active{
+    background:yellow;
+  }
+
+  .box-inside{
+    background: black;
+    width: 50px;
+    height: 50px;
+  }
+
+}
