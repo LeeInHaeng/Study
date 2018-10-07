@@ -1,0 +1,2864 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<time.h>
+#include<math.h>
+
+// 학번 정렬 및 search를 위한 리스트 (트리 구조임)
+typedef struct idlist {
+	double id; // double 형으로 받는 이유는 학번이 10자리까지 가능하기 때문에 int로는 커버 안됨
+	struct idlist *lnext;
+	struct idlist *rnext;
+}IDlist;
+
+// student.db를 단일리스트로 연결시키기 위한 구조체
+typedef struct STlist {
+	int s_cnt;
+	char first_name[10];
+	char last_name[20];
+	double id;
+	struct STlist *next;
+}STlist;
+
+// integ.db를 단일리스트로 연결시키기 위한 구조체
+typedef struct Integ {
+	char name[30];
+	double id;
+	double per;
+	int rank;
+	char grade[10];
+	struct Integ *next;
+}Integ;
+
+void Start(); // 처음 프로그램 실행 함수
+void del_file(); // db 초기 생성시 모든 .db 파일을 삭제함
+int get_s_id_len(); // 학생 ID의 길이를 얻기 위한 함수
+int get_st_inf(int); // 학생의 이름을 읽어들이고, 학번을 랜덤 제너레이트
+void prt_eval(); // 평가 기준 메뉴 출력을 위한 함수
+void get_eval(FILE **); // 평가 기준을 받기 위한 함수
+int confirm_eval(FILE **); //평가 기준을 완벽하게 선택 했는지 다시한번 확인하는 함수
+void create_eval_db(FILE **, FILE **, FILE **); // evaluaion_name.db를 만들기 위한 함수
+int check_db(); // student.db와 evaluation.db가 존재하는지 검사
+
+void select_eval_name(); // 평가항목 점수 입력을 위해 평가항목을 선택하는 함수
+
+void create_tree(IDlist **); // student.db의 학생ID를 이진트리로 생성
+int search_tree(IDlist **, double); // 학생ID 이진트리로 search
+
+void input_score(char *, double); // 학생 점수 입력
+char select_db(); // 어떤 db를 수정할지 입력 받음
+void change_db(char); // db 갱신 함수
+int get_name(); // 학생 이름 입력을 위한 함수
+void get_s_id(); // 학생 ID를 입력 받는 함수
+void insert_db(); // 학생 정보 추가시 student.db 수정
+int del_st(); // 학생 정보 삭제
+int get_s_cnt(); // student.db에 있는 학생수를 구함
+
+void create_list(STlist **); //student.db의 내용을 단일리스트로 연결
+void del_list(STlist **, double); // 단일 리스트에서 삭제 
+void change_list(STlist **, double, double); // 단일 리스트에서 학번 변경
+
+void rewrite_st(STlist **); // student.db를 다시 작성함
+void rewrite_db(STlist **); // eval_name.db에 student.db에서 삭제된 학번을 갱신
+
+void change_st(); // 수정 메뉴에서 학생 정보 수정탭
+int change_id(); // 학번 변경
+void rewrite_db2(STlist **); // db 갱신
+
+void change_eval_name(); // 기존 평가 항목의 이름을 변경
+
+void create_integ_db(); // 이름, 학번, 평가 항목별 총점, 퍼센트, 학점이 입력된 db를 새로 생성함
+void write_rank(); // 퍼센트로 등수를 매김
+int print_menu(); // 출력 메뉴를 출력
+void sort_menu(); // 정렬 방식 선택
+void create_integ_list(Integ **); // 학생 통합정보 db인 integ.db를 단일리스트로 연결kq
+void prt_grade_a(Integ **); // 학점 오름차순 정렬 후 출력
+void prt_grade_d(Integ **); // 학점 내림차순 정렬 후 출력
+void prt_name_a(Integ **); // 학생 이름 오름차순 정렬 후 출력
+void prt_name_d(Integ **); // 학생 이름 내림차순 정렬 후 출력
+void prt_id_a(Integ **); // id 오름차순 정렬 후 출력
+void prt_id_d(Integ **); // id 내림차순 정렬 후 출력
+void select_st_inf(); // 사용자가 출력을 원하는 메뉴만 선택 후 그 메뉴에 대해서 전체 학생 정보 출력
+void prt_one_st(); // 한명의 학생 정보만 출력
+
+
+int main()
+{
+	char sel; // 각 메뉴 선택을 위한 char 변수
+	int s_id_len; // student ID의 길이를 받는 변수
+	int s_cnt = 0; // 학생 수를 구하기 위한 변수
+	int i = 0, j = 0; // 제어를 위한 변수
+	FILE *st = NULL; // student.db를 생성하기 위한 변수
+	FILE *st2 = NULL; // student.db에서 s_id 중복을 위해 잠시 열어주는 변수
+	FILE *evalu = NULL; // evaluation.db를 생성하기 위한 변수
+	FILE *id_score = NULL; // 평가 기준 별로 학생의 ID와 점수를 받는 db를 생성하기 위한 변수
+
+	while (1)
+	{
+		Start(); // 메뉴 출력 함수
+		scanf("%c", &sel); // 메뉴 선택
+		getchar(); // 버퍼 제거
+		switch (sel) // switch 문을 이용해 DB 생성 선택
+		{
+		case '1': // DB 생성 메뉴
+			del_file(); // 기존에 있던 .db 파일을 다 지우는 함수 호출
+			s_id_len = get_s_id_len(); // Student ID의 길이를 반환하는 함수 호출 후 s_id_len 변수에 저장
+
+			 // --------------------------------------------------------------------------------
+			 // 테스터의 편의를 위해 미리 작성된 학생의 이름을 입력받아서 student.db에 작성한다
+			// 그리고 s_id_len만큼 학번의 길이를 받아서 학번을 랜덤으로 제너레이션한다.
+			if (get_st_inf(s_id_len) == 0) // 미리 이름이 입력되있어야 하는 student.txt가 존재하지 않는다면
+				break;
+			// --------------------------------------------------------------------------------
+
+			while (1) // 평가 기준을 입력 받기 위한 while문
+			{
+				prt_eval(); // 평가 기준 메뉴 출력을 위한 함수 호출
+				get_eval(&evalu); // 평가 기준을 DB에 기록하기 위한 함수 호출
+				i = confirm_eval(&evalu);
+				if (i != 0) // 0이라면 평가 기준 프린트부터 다시
+					break; // 0이 아니라면 평가 기준 db 마침 
+			}
+			// evaluation.db 작성 완료 ---> 사용함수 3개
+
+			create_eval_db(&evalu, &st, &id_score); // evaluation_name.db를 생성하기 위한 함수 호출
+
+													// 모든 DB가 정상적으로 생성!
+			printf("\n\n [[ Success Create Student Management DB ]] \n\n");
+			getchar(); // 버퍼제거
+			break; // case1 끝
+				   // DB 생성 메뉴 끝
+
+		case '2': // 평가 항목 선택 후 점수를 입력하는 메뉴
+			if (check_db() == 1) // student.db와 evaluation.db가 존재한다면
+				select_eval_name(); // 평가항목 점수 입력을 위해 평가항목을 선택
+
+			break; // case2 끝
+				   // 점수 입력 메뉴 끝
+
+		case '3': // 현재 존재하는 db를 선택한 후 그 상세 내용을 수정한다.
+			if (check_db() == 1)
+			{
+				sel = select_db(); // 수정할 db 선택 함수
+				if (sel == '3')
+					break;
+				change_db(sel);
+			}
+
+			break; // case3 끝
+				   // db 선택 후 수정 끝
+
+		case '4': // 출력 부분
+			if (check_db() == 1)
+			{
+				create_integ_db();
+				if (print_menu() == 4)
+					break;
+			}
+
+			break; // case 4끝
+				   // 출력메뉴 끝
+
+		case '5': // 5번 메뉴 선택시 종료
+			exit(0);
+
+		default: // 메뉴 잘못 선택시 경고 메세지
+			printf("[-] Wrong Choice! Please Re Select  \n");
+			break;
+		}
+	}
+	return 0;
+}
+
+void Start()
+{
+
+	printf("\nWelcome to Student Management Program \n\n"); // 프로그램 인사말
+	printf("-------------------------\n");
+	printf("1 . DB 생성\n");
+	printf("2 . 입   력\n");
+	printf("3 . 수   정\n");
+	printf("4.  출   력\n");
+	printf("5.  종   료\n\n");
+	printf("-------------------------\n");
+	printf("Select ---> : ");
+
+}
+
+void del_file()
+{
+	remove("student.db");
+	remove("evaluation.db");
+	remove("Assignment.db");
+	remove("Project.db");
+	remove("Laboratory.db");
+	remove("Attendance.db");
+	remove("Participation.db");
+	remove("Quiz.db");
+	remove("Midterm-Exam.db");
+	remove("Final-Exam.db");
+}
+
+int get_s_id_len()
+{
+	int s_id_len; // student ID의 길이를 받는 변수
+	printf("\nPlease enter number of digit for student ID (ID Length): \n\n"); // 학생 ID 길이 정보 받기
+	while (1)
+	{
+		scanf("%d", &s_id_len);
+		if (s_id_len <1 || s_id_len>10) // 1보다 작거나 혹은 너무 높은 숫자 입력시 에러 메세지
+			printf("\n[-] Please enter student ID 1~11\n\n"); // 에러 메세지
+		else
+			break;
+	}
+	return s_id_len; // 학생 ID 길이를 반환
+}
+
+int get_st_inf(int s_id_len)
+{
+	// 테스터의 편의를 위해 이름만 입력되있는 학생의 파일 정보를 읽어들여서 student.db에 저장
+	FILE *st_tmp; // 이름만 입력되있는 학생의 파일 정보를 얻기 위한 변수
+	FILE *st; // student.db에 저장하기 위한 변수
+	int ff;
+	int s_cnt = 1;
+	int s_id, i;
+	char first_name[20];
+	char last_name[20];
+
+	st_tmp = fopen("student.txt", "r");
+	if (!st_tmp)
+	{
+		printf("student.txt 파일이 없습니다!\n");
+		return 0;
+	}
+		
+	st = fopen("student.db", "w");
+
+	fprintf(st, "   NAME                 STUDET-ID \n");
+
+	srand((unsigned)time(NULL));
+
+	while (1)
+	{
+		// 이름만 적혀있는 student.txt를 읽어들이면서 student.db에 작성
+		ff = fscanf(st_tmp, "%s %s", first_name, last_name);
+		if (ff == EOF)
+			break;
+
+		fprintf(st, "%d %s %s\t\t", s_cnt, first_name, last_name);
+		s_cnt++;
+
+		// 테스터의 편의를 위해 Student ID의 자릿수만큼 랜덤숫자를 학생ID로 셋팅
+
+
+		for (i = 0; i < s_id_len; i++)
+		{
+			s_id = rand() % 9 + 1;
+			fprintf(st, "%d", s_id);
+		}
+
+		fprintf(st, "\n");
+	}
+	fclose(st_tmp);
+	fclose(st);
+	return 1;
+}
+
+void prt_eval()
+{
+	printf("\n==============================================\n\n");
+	printf("Evaluation Criteria \n\n");
+	printf("    1. Assignment \n\n");
+	printf("    2. Project \n\n");
+	printf("    3. Laboratory \n\n");
+	printf("    4. Attendance \n\n");
+	printf("    5. Participation \n\n");
+	printf("    6. Quiz \n\n");
+	printf("    7. Midterm Exam \n\n");
+	printf("    8. Final Exam \n\n");
+	printf("    9. Exit \n\n\n");
+}
+
+void get_eval(FILE **evalu)
+{
+	int res_per; // 평가기준 퍼센트의 결과를 받기 위한 변수
+	int eval_sel; // 평가 기준의 번호를 선택하기 위한 변수
+	int per = 0; // 평가기준 퍼센트를 받기 위한 변수
+	int sel; // 메뉴 선택을 위한 변수
+	int i; // 제어를 위한 변수
+	char *eval_name; // 평가기준을 입력 받기 위한 변수
+
+	eval_name = (char *)malloc(20 * sizeof(char)); // 평가기준 입력 동적 할당
+
+	while (1) // 평가 기준 입력을 위한 while문
+	{
+		i = 0;
+		*evalu = fopen("evaluation.db", "w"); // evaluation.db를 생성하기 위한 파일 오픈
+		printf("Please select number to evaluate and percentage \n\n");
+		printf("Example : 1 20 \n\n");
+		res_per = 0; // 누적 퍼센트를 0으로 초기화
+
+		while (1)
+		{
+			scanf("%d", &eval_sel); // eval_sel 변수에 평가 기준을 넣음
+			if (eval_sel == 9)// 만약 선택이 exit이면
+			{				// 입력 받던 평가 기준을 멈추고 파일 저장후 나감
+				fclose(*evalu);
+				break;
+			}
+			else if (eval_sel <= 0 || eval_sel >= 10) // 1-9 메뉴가 아니면 에러 메세지
+			{
+				printf("\n[-] Wrong Choice! Select [ 1-9 ] \n\n");
+				break;
+			}
+			else // 선택이 제대로 됬다면
+			{
+				switch (eval_sel) // 사용자의 선택에 따라서 평가 기준을 나눔
+				{
+				case 1:
+					eval_name = "Assignment";
+					break;
+				case 2:
+					eval_name = "Project";
+					break;
+				case 3:
+					eval_name = "Laboratory";
+					break;
+				case 4:
+					eval_name = "Attendance";
+					break;
+				case 5:
+					eval_name = "Participation";
+					break;
+				case 6:
+					eval_name = "Quiz";
+					break;
+				case 7:
+					eval_name = "Midterm-Exam";
+					break;
+				case 8:
+					eval_name = "Final-Exam";
+					break;
+				}
+				// 사용자가 선택한 숫자와 평가 기준을 db에 저장
+				fprintf(*evalu, "%d %s ", eval_sel, eval_name);
+
+				scanf("%d", &per); // 평가 기준에 대한 퍼센트를 per 변수에 입력 받음
+			}
+
+			res_per += per; // 퍼센트가 몇퍼센트 까지 누적 되었는지 계산
+			if (res_per > 100) // 누적 퍼센트가 100퍼센트가 넘는다면
+			{
+				printf("\n[-] Exceed 100% ! \n\n");
+				printf("[-] If you want to enter from the first, press 1 \n");
+				printf("[-] If you want to modify previous value, press 2 \n\n");
+				scanf("%d", &sel);
+				if (sel == 1) // 1을 선택하면 초기 퍼센트 받는 while문으로
+				{
+					i = 1;
+					printf("\nYou select menu 1\n");
+					printf("Percentage Initialized\n\n");
+					break; // 그동안 기록 되었던 evaluation.db의 내용이 초기화 됨
+				}
+				else if (sel == 2) // 2를 선택하면 마지막 평가 기준에 대한 퍼센트를 다시 받음
+				{
+					while (1) // 퍼센트를 100으로 만들기 위한 while문
+					{
+						res_per = res_per - per; // 현재 퍼센트를 계산함
+						printf("Current Percentage is %d \n", res_per); // 현재 몇퍼센트인지 보여줌
+						printf("\nPlease enter percentage again %d \n\n", 100 - res_per);
+						scanf("%d", &per);
+						res_per += per;
+						if (res_per == 100) // 누적퍼센트가 100퍼센트이면 첫번째 와일문을 빠져 나오고
+						{				// 그와 동시에 db에 퍼센트를 저장함
+							fprintf(*evalu, "%d\n", per);
+							fclose(*evalu); // evaluation.db의 내용을 저장함
+							break;
+						}
+						else
+							printf("\n[-] Not 100% ! Enter right percentage \n\n");
+					}
+				}
+				if (res_per == 100) // 여기서 다시 검사해서 전체 평가 기준에 대한 와일문을 빠져나감
+					break;
+			}
+			else if (res_per == 100) // 마지막 까지 100퍼센트를 초과하지 않고 
+									 // 정확하게 100퍼센트를 맞춰서 입력했다면
+			{
+				fprintf(*evalu, "%d\n", per); // 마지막 퍼센트를 db에 저장하고
+				fclose(*evalu); // evaluation.db의 내용을 저장함
+				break;
+			}
+			else // 누적 퍼센트가 100퍼센트가 아니라면
+			{
+				fprintf(*evalu, "%d\n", per); // 평가 기준에 대한 퍼센트를 db에 저장
+				printf("\nPlease select another number to evaluate and percentage \n\n");
+			}
+		}
+		if (i != 1)
+			break; // evaluation.db에 대한 while문을 완전히 빠져 나감
+	}
+}
+
+int confirm_eval(FILE **evalu)
+{
+	int eval_sel; // 평가 기준의 번호를 선택하기 위한 변수
+	int eval_res; // evaluate.db의 fscanf를 읽기 위한 변수
+	int per = 0; // 평가기준 퍼센트를 받기 위한 변수
+	int sel; // 메뉴 선택을 위한 변수
+	char *eval_name; // 평가기준을 입력 받기 위한 변수
+
+	eval_name = (char *)malloc(20 * sizeof(char)); // 평가기준 입력 동적 할당
+
+	printf("\n\n\n");
+	printf("You select \n\n");
+	*evalu = fopen("evaluation.db", "r"); // evaluation.db의 정보를 받기 위해 오픈
+	while (1) // db의 내용을 한줄씩 읽기 위한 while문
+	{
+		eval_res = fscanf(*evalu, "%d%s%d", &eval_sel, eval_name, &per); // 한줄씩 내용을 읽음
+		if (eval_res == EOF) // 끝까지 다읽으면 break
+			break;
+		if (strlen(eval_name) <= 7) // Quiz 같이 짧은 길이의 eval_name은 탭2개
+			printf("   %d.  %s\t\t%d\n", eval_sel, eval_name, per);
+		else // 나머진 탭 1개로 정렬
+			printf("   %d.  %s\t%d\n", eval_sel, eval_name, per);
+	}
+	fclose(*evalu);
+
+	printf("\nIs it correct? Yes: 1 No: 0 \n\n");
+	printf("If you press \"No\", it will start from the first.\n\n");
+	scanf("%d", &sel);
+	return sel;
+}
+
+void create_eval_db(FILE **evalu, FILE **st, FILE **id_score)
+{
+	int eval_res; // evaluate.db의 fscanf를 읽기 위한 변수
+	int eval_sel; // 평가 기준의 번호를 선택하기 위한 변수
+	int per = 0; // 평가기준 퍼센트를 받기 위한 변수
+	int i; // 제어를 위해 사용하는 변수
+	int s_id_res; // evaluate.db의 fscanf를 읽기 위한 변수
+	int s_cnt = 0; // 학생 수를 구하기 위한 변수
+	char *eval_name; // 평가기준을 입력 받기 위한 변수
+	char *id_score_db; // id_score의 db를 만들기 위해 db의 이름을 저장하는 변수
+	char *last_name; // last name을 받는 변수
+	char *first_name; // first name을 받는 변수
+	char *s_id; // Student ID를 받는 변수
+	double score1 = 0; // 학생의 점수를 받기 위한 변수
+	double score2 = 0;
+	double score3 = 0;
+
+	eval_name = (char *)malloc(20 * sizeof(char)); // 평가기준 입력 동적 할당
+	id_score_db = (char *)malloc(20 * sizeof(char)); // id_score의 db의 이름을 저장하기 위해 동적 할당
+	last_name = (char *)malloc(20 * sizeof(char)); // last_name 동적 할당
+	first_name = (char *)malloc(20 * sizeof(char)); // first_name 동적 할당
+	s_id = (char *)malloc(20 * sizeof(char)); // 동적할당
+
+	*evalu = fopen("evaluation.db", "r"); // 평가 과목의 이름의 정보를 얻기 위해 오픈
+	*st = fopen("student.db", "r"); // student_id의 정보를 얻기 위해 오픈
+	while (1)
+	{
+		eval_res = fscanf(*evalu, "%d%s%d", &eval_sel, eval_name, &per); // evaluation.db를 한줄씩 읽음
+		if (eval_res == EOF) // 파일을 다 읽었다면 break
+			break;
+
+		id_score_db = strcat(eval_name, ".db"); // eval_name.db를 만들기 위해 저장
+
+		*id_score = fopen(id_score_db, "a"); // eval_name.db 생성
+
+		fprintf(*id_score, "   STUDENT-ID       score1   score2   score3\n");
+
+		i = 0; // fseek 제어를 위해 i를 0으로 초기화
+		while (1)
+		{
+			// s_id의 정보를 얻기 위해 student.db의 정보를 한줄씩 읽음
+			if (i == 0) // fscanf로 student.db를 처음 읽는 다는 조건
+			{
+				// 여기서 fseek을 사용하는 이유는 student.db의 맨 위가 NAME, STUDENT-ID로
+				// 되있기 때문에 fseek을 사용하지 않는다면 fscanf로 데이터를 읽어 올 수가 없다.
+				fseek(*st, 34, 0);
+				i++;
+			}
+
+			s_id_res = fscanf(*st, "%d %s %s %s", &s_cnt, first_name, last_name, s_id);
+			if (s_id_res == EOF) // s_id의 정보를 다 읽었으면 db를 저장하고 break
+			{
+				fclose(*id_score);
+				break;
+			}
+			fprintf(*id_score, "   %s        %.1lf\t%.1lf\t%.1lf\n", s_id, score1, score2, score3);
+		}
+	}
+	// db 생성을 위해 열어줬던 파일을 다시 닫아줌
+	fclose(*evalu);
+	fclose(*st);
+}
+
+int check_db()
+{
+	FILE *st;
+	FILE *evalu;
+
+	st = fopen("student.db", "r");
+	evalu = fopen("evaluation.db", "r");
+
+	if (st && evalu)
+	{
+		fclose(st);
+		fclose(evalu);
+		return 1;
+	}
+
+	else
+	{
+		printf("\nFirst You must Create DB (Main menu 1)\n");
+		return 0;
+	}
+}
+
+void select_eval_name()
+{
+	IDlist *stlist = NULL;
+	FILE *evalu;
+	int num, per, ff, cnt = 1, i = 0, j = 0;
+	char eval_name[20];
+	int sel;
+	double id;
+
+	while (1)
+	{
+		// 현재 존재하는 eval_name.db가 어떤 것들이 있는지 출력함
+		evalu = fopen("evaluation.db", "r");
+		printf("\n\nSelect Evaluation Item\n\n");
+		printf("--------------------------\n");
+		while (1)
+		{
+			ff = fscanf(evalu, "%d %s %d", &num, eval_name, &per);
+			if (ff == EOF)
+				break;
+			printf("%d. %s\n", cnt, eval_name);
+			cnt++;
+		}
+		printf("%d. Back to the Main Menu\n", cnt); // 맨 마지막 번호는 메인 메뉴로 돌아가는 항목
+		printf("--------------------------\n");
+		printf("---> ");
+		scanf("%d", &sel); // eval_name.db중 점수 입력을 원하는 eval_name.db를 선택함
+		getchar(); // 버퍼 제거
+		fclose(evalu);
+		if (sel == cnt) // 사용자의 선택이 제일 마지막 번호라면
+		{
+			j = 1; // while문을 빠져나감
+			break;
+		}
+		if (sel <= 0 || sel>cnt) // 사용자의 선택이 범위에 없다면
+		{
+			printf("Wrong Select!\n\n"); // 예외 처리
+			cnt = 1; // cnt를 다시 1로 초기화
+		}
+		else // 정상적인 경우
+			i = 1; // i를 1로 변경후
+
+		if (i == 1) // while문을 빠져 나감
+			break;
+	} // while문 끝
+
+	if (j != 1) // 메인 메뉴로 돌아가는 경우가 아니라면
+	{
+		evalu = fopen("evaluation.db", "r");
+		for (i = 0; i < sel; i++)
+			ff = fscanf(evalu, "%d %s %d", &num, eval_name, &per);
+		fclose(evalu);
+
+		strcpy(eval_name, strcat(eval_name, ".db"));
+
+		// 사용자가 점수 입력을 원하는 파일을 읽어들이면서 학번을 이진 트리구조로 연결시킴
+		create_tree(&stlist);
+
+		// 점수 입력을 원하는 학번을 입력받음
+		while (1)
+		{
+			printf("\n\n점수 입력을 원하는 Student-ID를 입력하시오.(뒤로 가려면 -1) : ");
+			scanf("%lf", &id);
+			getchar(); // 버퍼 제거
+
+			if (id == -1) // -1 선택시 while문 빠져나감
+				break;
+
+			// 실제 그 학번이 있는지 탐색
+			if (search_tree(&stlist, id) == 1) // 학번이 존재하는 경우
+			{
+				input_score(eval_name, id); // eval_name 평가항목과, id에 점수를 입력함
+			}
+			else // 학번이 존재하지 않는 경우
+				printf("\nDon't Exist Student-ID !\n");
+		}
+	}
+}
+
+void create_tree(IDlist **head)
+{
+	// student.db에 있는 학번을 이진트리 구조로 연결시킴
+	IDlist *newNode;
+	IDlist *tmp;
+	IDlist *pre;
+	char first_name[20];
+	char last_name[20];
+	int ff, s_cnt;
+	double id;
+	FILE *st;
+
+	st = fopen("student.db", "r");
+	fseek(st, 34, 0);
+	while (1)
+	{
+		tmp = *head;
+		ff = fscanf(st, "%d %s %s %lf", &s_cnt, first_name, last_name, &id);
+		if (ff == EOF)
+			break;
+
+		newNode = (IDlist *)malloc(sizeof(IDlist));
+		newNode->id = id;
+		newNode->lnext = NULL;
+		newNode->rnext = NULL;
+
+		// id를 탐색 이진 트리로 연결시킴
+		if (*head == NULL)
+			*head = newNode;
+		else
+		{
+			while (tmp != NULL) // tmp 노드를 이동시킴
+			{
+				if (newNode->id < tmp->id)
+				{
+					pre = tmp;
+					tmp = tmp->lnext; // newNode가 tmp보다 작으면 tmp를 왼쪽으로 이동
+				}
+				else
+				{
+					pre = tmp;
+					tmp = tmp->rnext; // 아니라면 tmp를 오른쪽으로 이동
+				}
+			} // tmp 이동 완료
+
+			tmp = pre; // tmp를 널 전으로 돌아오게함
+			if (newNode->id < tmp->id) // newNode가 tmp의 id보다 작다면
+				tmp->lnext = newNode; // 왼쪽에 연결시킴
+			else // 아니라면
+				tmp->rnext = newNode; //오른쪽에 연결시킴
+		}
+
+	}
+	fclose(st);
+}
+
+int search_tree(IDlist **head, double id)
+{
+	IDlist *tmp;
+
+	tmp = *head;
+
+	// 탐색 시작
+	while (tmp != NULL)
+	{
+		if (tmp->id == id) // 학번을 찾으면 1반환
+			return 1;
+		else
+		{
+			if (id < tmp->id)
+				tmp = tmp->lnext;
+			else
+				tmp = tmp->rnext;
+		}
+	}
+
+	return 0; // 학번을 찾지 못하면 0 반환
+}
+
+void input_score(char *eval_name, double id)
+{
+	char sel;
+	FILE *ev_tmp;
+	FILE *ev;
+	int ff, i = 0;
+	double tmp_id;
+	double score1 = 0, score2 = 0, score3 = 0;
+	double ch_score1 = 0, ch_score2 = 0, ch_score3;
+
+	while (1)
+	{
+		printf("---------------------------\n");
+		printf("1. Input Score1\n");
+		printf("2. Input Score2\n");
+		printf("3. Input Score3\n");
+		printf("4. Input All Score\n");
+		printf("!! Score's range is 0 - 100\n");
+		printf("---------------------------\n");
+		printf("Select --> ");
+		scanf("%c", &sel);
+		getchar(); // 버퍼 제거
+
+		if (sel != '1' && sel != '2' && sel != '3' && sel != '4')
+			printf("\n\nWrong Select!\n\n");
+
+		else // 1 2 3 4 메뉴를 스위치 케이스로 나눔
+		{
+			switch (sel)
+			{
+			case '1': // score1만 입력하는 경우
+				while (1)
+				{
+					printf("\nInput Score1 : ");
+					scanf("%lf", &ch_score1);
+					if (ch_score1 > 100 || ch_score1 < 0) // 점수 범위는 0~100까지임
+						printf("\nWrong Score!\n");
+					else
+						break;
+				}
+				break;
+			case '2': // score2만 입력하는 경우
+				while (1)
+				{
+					printf("\nInput Score2 : ");
+					scanf("%lf", &ch_score2);
+					if (ch_score2 > 100 || ch_score2 < 0) // 점수 범위는 0~100까지임
+						printf("\nWrong Score!\n");
+					else
+						break;
+				}
+
+				break;
+			case '3': // score3만 입력하는 경우
+				while (1)
+				{
+					printf("\nInput Score3 : ");
+					scanf("%lf", &ch_score3);
+					if (ch_score3 > 100 || ch_score3 < 0) // 점수 범위는 0~100까지임
+						printf("Wrong Score!\n");
+					else
+						break;
+				}
+
+				break;
+			case '4': // score1, score2, score3을 다 입력하는 경우
+				while (1)
+				{
+					printf("\nInput Score1, Score2, Score3 : ");
+					scanf("%lf %lf %lf", &ch_score1, &ch_score2, &ch_score3);
+					if (ch_score1 > 100 || ch_score1 < 0 || ch_score2>100 || ch_score2 < 0 ||
+						ch_score3>100 || ch_score3 < 0) // 점수 범위는 0~100까지임
+						printf("Wrong Score!\n");
+					else
+						break;
+				}
+
+				break;
+			}
+
+			// 받은 점수를 eval_name.db에 다시 입력해야됨
+			ev_tmp = fopen("eval-name.tmp", "w"); // 일단 tmp에 입력을 시작
+			ev = fopen(eval_name, "r"); // 사용자가 점수입력을 원하는 eval_name.db를 읽어 들임
+			fseek(ev, 45, 0);
+
+			fprintf(ev_tmp, "   STUDENT-ID       score1   score2   score3\n");
+
+			while (1)
+			{
+				ff = fscanf(ev, "%lf %lf %lf %lf", &tmp_id, &score1, &score2, &score3); 
+				// 기존에 입력됬었던 점수를 그대로 읽어들임
+				if (ff == EOF)
+					break;
+
+				if (tmp_id == id) // 점수 변경을 원하는 id라면
+				{
+					switch (sel) // score1 , 2 , 3 , all 에 따라서 점수 입력을 나눔
+					{
+					case '1': // score1만 변경
+						fprintf(ev_tmp, "   %.0lf        %.1lf\t%.1lf\t%.1lf\n", tmp_id, ch_score1, score2, score3);
+						break;
+					case '2': // score2만 변경
+						fprintf(ev_tmp, "   %.0lf        %.1lf\t%.1lf\t%.1lf\n", tmp_id, score1, ch_score2, score3);
+						break;
+					case '3': // score3만 변경
+						fprintf(ev_tmp, "   %.0lf        %.1lf\t%.1lf\t%.1lf\n", tmp_id, score1, score2, ch_score3);
+						break;
+					case '4': // score1, score2, score3 다 변경
+						fprintf(ev_tmp, "   %.0lf        %.1lf\t%.1lf\t%.1lf\n", tmp_id, ch_score1, ch_score2, ch_score3);
+						break;
+
+					}
+				}
+
+				else // id가 아니라면 기존의 점수를 그대로 가져옴
+					fprintf(ev_tmp, "   %.0lf        %.1lf\t%.1lf\t%.1lf\n", tmp_id, score1, score2, score3);
+			}
+
+			fclose(ev_tmp);
+			fclose(ev);
+			i = 1; // while문을 빠져나가기 위한 조작
+		} // else문 끝
+
+		  // 원본 eval_name.db 파일을 삭제하고 .tmp 파일을 원본 파일로 이름을 바꾼다
+		remove(eval_name);
+		rename("eval-name.tmp", eval_name);
+
+		if (i == 1)
+			break;
+	} // while문 끝
+
+
+}
+
+char select_db()
+{
+	char sel;
+
+	while (1)
+	{
+		printf("\nSelect want to change DB\n");
+		printf("-------------------------------------------------------------\n");
+		printf("1. student.db \n");
+		printf("2. evaluation.db \n");
+		printf("3. Back to the Main Menu \n\n");
+		printf("If you want to change student score, please select Input Menu\n");
+		printf("-------------------------------------------------------------\n");
+		printf("---> ");
+		scanf("%c", &sel);
+		getchar(); // 버퍼 제거
+		if (sel == '3') // 메인 메뉴로 돌아감
+			break;
+
+		if (sel != '1' && sel != '2') // 예외 처리
+			printf("\nWrong Select!\n");
+		else
+			break;
+	}
+	return sel;
+}
+
+void change_db(char sel) // select_db에서 넘어온 값으로 switch case
+{
+	int i;
+
+	switch (sel)
+	{
+	case '1': // student.db를 수정하는 경우
+		while (1)
+		{
+			i = 0;
+			printf("\nYou Select Change student.db\n\n");
+			printf("-------------------------------\n");
+			printf("1. Insert Student Information\n");
+			printf("2. Delete Student Information\n");
+			printf("3. Change Student Information\n");
+			printf("-------------------------------\n");
+			printf("Select --> ");
+			scanf("%c", &sel);
+			getchar(); // 버퍼 제거
+
+			switch (sel)
+			{
+			case '1': // 학생 정보를 삽입하는 부분
+				while (1)
+				{
+					if (get_name() == 1) // 이름 삽입
+						break;
+					get_s_id(); // 학번 삽입
+					insert_db(); // 학번이 추가되었기때문에 db의 내용들도 바꿔야됨
+				}
+				break;
+			case '2': // 학생 정보를 삭제하는 부분
+				while (1)
+				{
+					if (del_st() == 1)
+						break;
+				}
+				break;
+
+			case '3': // 학생 정보를 수정하는 부분
+				change_st();
+				break;
+			default:
+				printf("\nWrong Select!\n");
+				i = 1;
+				break;
+			}
+			if (i != 1)
+				break;
+		} // while문 끝
+
+
+		break;
+	case '2': // evaluation.db를 수정하는 경우
+		while (1)
+		{
+			i = 0;
+			printf("\nYou Select Change evaluation.db\n\n");
+			printf("-------------------------------------\n");
+			printf("1. Change Name of evaluaion\n");
+			printf("2. Back to the Main Menu\n");
+			printf("-------------------------------------\n");
+			printf("Select --> ");
+			scanf("%c", &sel);
+			getchar(); // 버퍼 제거
+
+			switch (sel)
+			{
+			case '1': // 평가 기준 이름만 변경
+				change_eval_name();
+				break;
+
+			case '2': // 메인 메뉴로 돌아감
+				i = 1;
+				break;
+
+			default:
+				printf("\nWrong Select!\n");
+				break;
+			}
+			if (i == 1)
+				break;
+		}
+
+	}
+}
+
+int get_name()
+{
+	FILE *st;
+	int i, ff, j = 0; // 제어를 위한 변수
+	int s_cnt;
+	double id;
+	char first_name[20];
+	char last_name[20];
+
+	st = fopen("student.db", "r"); // student.db에 입력하기 위해 오픈
+
+	fseek(st, 34, 0);
+	while (1) // 학생 수를 카운트 하기 위한 while문
+	{
+		ff = fscanf(st, "%d %s %s %lf", &s_cnt, first_name, last_name, &id);
+		if (ff == EOF)
+			break;
+	}
+	fclose(st);
+	// s_cnt가 저장되어 있음
+	s_cnt++;
+
+	st = fopen("student.db", "a");
+	while (1) // first name에 대한 익셉션 핸들링을 위한 와일문
+	{
+		printf("\n\nIf you want to go to Main Menu Input -1\n");
+		printf("\nPlease enter first name : "); // first name 입력 받기
+		scanf("%s", first_name); // first_name 변수에 입력받기
+		getchar();
+		if (strcmp(first_name, "-1") == 0)
+		{
+			j = 1;
+			break;
+		}
+
+		if (strlen(first_name) > 5) // first name의 길이가 너무 길다면 에러 메세지
+			printf("\n[-] Wrong first name!! \n\n");
+		else
+		{
+			fprintf(st, "%d %s ", s_cnt, first_name); // first name이 정상이라면 db에 입력
+			break;
+		}
+	}
+
+	if (j != 1)
+	{
+		while (1) // last name에 대한 익셉션 핸들링을 위한 와일문
+		{
+			printf("\nPlease enter last name : "); // last name 입력받기
+			scanf("%s", last_name); // last_name 변수에 입력 받기
+			if (strlen(last_name)>10) // last name의 길이가 너무 길다면 에러 메세지
+				printf("\n[-] Wrong last name!! \n\n");
+			else
+			{
+				fprintf(st, "%s\t\t", last_name); // last name이 정상이라면 db에 입력
+				break;
+			}
+		}
+	}
+
+	fclose(st); // 열어 줬던 파일을 닫아주면서 내용 갱신
+	return j;
+}
+
+void get_s_id()
+{
+	FILE *st;
+	int i = 0, j = 0; // 제어를 위한 변수
+	int ff; // evaluate.db의 fscanf를 읽기 위한 변수
+	int s_cnt, s_id_len;
+	char s_id[30]; // Student ID를 받는 변수
+	char s_id_tmp[30]; // fscanf로 중복 검사를 위해 임시로 저장하는 변수
+	char first_name[20];
+	char last_name[20];
+
+	printf("\nPlease enter ID number : "); // 학생 ID 입력 받기
+
+	while (1) // 학생 ID의 잘못된값 필터를 위한 while문
+	{
+		i = 0;
+		scanf("%s", s_id); // s_id 변수에 학생 ID 입력 받기
+		st = fopen("student.db", "r"); // 밑에서 fscanf를 사용하기 위해 r모드로 열어줌
+
+									   // 여기서 fseek을 사용하는 이유는 student.db의 맨 위가 NAME, STUDENT-ID로
+									   // 되있기 때문에 fseek을 사용하지 않는다면 fscanf로 데이터를 읽어 올 수가 없다.
+		fseek(st, 34, 0);
+		strcpy(s_id_tmp, s_id); // 중복 검사를 위해 s_id_tmp에 s_id 값을 복사
+
+								// 중복 검사 while문 시작
+		while (1)
+		{
+			// student.db 에서 각각의 변수들에 대한 정보를 한줄씩 받아옴
+			ff = fscanf(st, "%d %s %s %s", &s_cnt, first_name, last_name, s_id);
+			s_id_len = strlen(s_id);
+
+			if (ff == EOF) // 중복 되지 않는 경우
+			{
+				i = 1;
+				break;
+			}
+
+			// student.db에서 읽어온 학생 ID 값이 s_id 변수에 저장되어 있는 상태이고
+			// 사용자가 등록을 원하는 s_id_tmp 와 중복 되는지 검사한다
+			if (strcmp(s_id_tmp, s_id) == 0)
+			{
+				// strcmp를 이용해 비교 후
+				// 중복이라면 에러 메세지 후 scanf를 이용해 s_id를 다시 받음
+				printf("\nID number %s already exist. Please enter again : ", s_id_tmp);
+				fclose(st);
+				break;
+			}
+		} // 중복검사 while문끝
+
+		if (i == 1) // 학생 ID 조건문들
+		{
+			if (atof(s_id_tmp) <= 0) // 학생 ID의 값이 음수이면 에러 메세지
+				printf("\n[-] Wrong Student ID!! \n\n");
+
+			else if (strlen(s_id_tmp) != s_id_len) // 함수 인자로 받은 학생 ID 길이와 값이 일치하지 않으면
+			{								  // 에러메세지
+				printf("[-] You enter %d digits ID number. \n", strlen(s_id_tmp));
+				printf("[-] You are required %d digits ID number. \n\n", s_id_len);
+			}
+
+			else // 학번이 정상이라면 student.db에 학번을 입력함
+			{
+				st = fopen("student.db", "a");
+				fprintf(st, "%s\n", s_id_tmp);
+				fclose(st);
+				break;
+			}
+			printf("Please enter ID number : "); // 학생 ID 입력 받기
+		}
+		fclose(st);
+	}
+}
+
+void insert_db()
+{
+	FILE *evalu;
+	FILE *eval_db;
+	FILE *st;
+	int ff;
+	int num, per, s_cnt;
+	double insert_id;
+	double score = 0;
+	char eval_name[20];
+	char first_name[10];
+	char last_name[10];
+
+	// 마지막으로 추가된 학생의 정보를 읽음
+	st = fopen("student.db", "r");
+	fseek(st, 34, 0);
+	while (1)
+	{
+		ff = fscanf(st, "%d %s %s %lf", &s_cnt, first_name, last_name, &insert_id);
+		if (ff == EOF)
+			break;
+	}
+	fclose(st);
+
+	// eval_name.db가 어떤것이 있는지 확인 후 수정
+	evalu = fopen("evaluation.db", "r");
+	while (1)
+	{
+		ff = fscanf(evalu, "%d %s %d", &num, eval_name, &per);
+		if (ff == EOF)
+			break;
+		strcpy(eval_name, strcat(eval_name, ".db"));
+
+		// eval_name.db의 맨 끝에 학번과 점수를 추가시킴
+		eval_db = fopen(eval_name, "a");
+		fprintf(eval_db, "   %.0lf        %.1lf        %.1lf     %.1lf\n", insert_id, score, score, score);
+		fclose(eval_db); // 파일 갱신
+	}
+	fclose(evalu);
+	printf("\n[ Success Insert Student Information]\n\n");
+	getchar(); // 메인 메뉴 가기전에 버퍼 제거
+}
+
+int del_st()
+{
+	IDlist *stlist = NULL;
+	STlist *stdb = NULL;
+	double id, del_id;
+
+	// student.db를 단일리스트로 연결시킴
+	create_list(&stdb);
+
+	printf("\n--------------------------------------------");
+	printf("\nIf you want to go to Main Menu Input -1\n");
+	printf("--------------------------------------------");
+	printf("\nInput you want to Delete Student ID : ");
+	scanf("%lf", &del_id);
+	getchar();
+	if (del_id == -1)
+		return 1;
+
+	// 먼저 삭제를 원하는 학번이 있는지 확인
+	// 위에 만들어뒀던 이진트리구조 함수 사용
+	create_tree(&stlist);
+	if (search_tree(&stlist, del_id) == 1) // 학번이 존재하는 경우
+	{
+		// 삭제를 원하는 학번을 단일리스트에서 삭제
+		del_list(&stdb, del_id);
+		// student.db를 갱신
+		rewrite_st(&stdb);
+		// eval_name.db를 갱신
+		rewrite_db(&stdb);
+	}
+
+	else // 학번이 존재하지 않는 경우
+		printf("\nDon't Exist Student-ID !\n");
+
+	return 0;
+}
+
+int get_s_cnt()
+{
+	FILE *f;
+	int ff;
+	int cnt = 0;
+	char first_name[20];
+	char last_name[20];
+	double id;
+
+	f = fopen("student.db", "r");
+	fseek(f, 34, 0);
+	while (1)
+	{
+		ff = fscanf(f, "%d %s %s %lf", &cnt, first_name, last_name, &id);
+		if (ff == EOF)
+			break;
+	}
+
+	fclose(f);
+	return cnt;
+}
+
+void create_list(STlist **head) // student.db를 단일리스트로 연결시킴
+{
+	STlist *tmp;
+	STlist *newNode;
+	int s_cnt;
+	int ff;
+	char first_name[10];
+	char last_name[20];
+	double id;
+	FILE *st;
+
+	tmp = *head;
+
+	st = fopen("student.db", "r");
+	fseek(st, 34, 0);
+	while (1)
+	{
+		ff = fscanf(st, "%d %s %s %lf", &s_cnt, first_name, last_name, &id);
+		if (ff == EOF)
+			break;
+
+		newNode = (STlist *)malloc(sizeof(STlist));
+		newNode->s_cnt = s_cnt;
+		strcpy(newNode->first_name, first_name);
+		strcpy(newNode->last_name, last_name);
+		newNode->id = id;
+		newNode->next = NULL;
+
+		if (*head == NULL)
+		{
+			*head = newNode;
+			tmp = newNode;
+		}
+		else
+		{
+			tmp->next = newNode;
+			tmp = newNode;
+		}
+	}
+	fclose(st);
+}
+
+void del_list(STlist **head, double id) // id를 가진 학생 정보를 단일리스트에서 삭제 시킴
+{
+	STlist *tmp;
+	STlist *pre;
+
+	tmp = *head;
+	pre = *head;
+
+	//삭제 타겟이라면
+	while (1)
+	{
+		if (id == tmp->id)
+		{
+			// 헤드 삭제 경우
+			if (tmp == *head)
+			{
+				*head = tmp->next;
+				free(tmp);
+				break;
+			}
+			else // 일반 삭제 경우
+			{
+				pre->next = tmp->next;
+				free(tmp);
+				break;
+			}
+		}
+		else // 타겟이 아니라면 아니라면 이동
+		{
+			pre = tmp;
+			tmp = tmp->next;
+		}
+	}
+}
+
+void rewrite_st(STlist **head) // student.db를 단일리스트 내용대로 갱신
+{
+	STlist *tmp;
+	FILE *st;
+	int s_cnt = 1;
+
+	tmp = *head;
+
+	st = fopen("student.db", "w");
+	fprintf(st, "   NAME                 STUDET-ID \n");
+
+	while (tmp != NULL)
+	{
+		fprintf(st, "%d ", s_cnt);
+		s_cnt++;
+		fprintf(st, "%s %s\t\t%.0lf\n", tmp->first_name, tmp->last_name, tmp->id);
+		tmp = tmp->next;
+	}
+	fclose(st);
+}
+
+void rewrite_db(STlist **head) // eval_name.db에서도 삭제된 학생의 학번을 삭제해야됨
+{
+	// insert_db 함수랑 약간 겹치는 부분이 있음
+	FILE *evalu;
+	FILE *eval_db;
+	FILE *eval_tmp;
+	int ff, ff2;
+	int num, per;
+	double id;
+	double score1, score2, score3;
+	char eval_name[20];
+	STlist *tmp;
+
+	tmp = *head;
+
+	// eval_name.db가 어떤것이 있는지 확인 후 수정
+	evalu = fopen("evaluation.db", "r");
+	while (1)
+	{
+		ff = fscanf(evalu, "%d %s %d", &num, eval_name, &per);
+		if (ff == EOF)
+			break;
+		strcpy(eval_name, strcat(eval_name, ".db"));
+
+		eval_db = fopen(eval_name, "r");
+		fseek(eval_db, 45, 0);
+
+		eval_tmp = fopen("eval.tmp", "w"); // tmp에 잠시 정보들을 저장해둠
+		fprintf(eval_tmp, "   STUDENT-ID       score1   score2   score3\n");
+
+		while (1)
+		{
+			ff2 = fscanf(eval_db, "%lf %lf %lf %lf", &id, &score1, &score2, &score3);
+			if (ff2 == EOF)
+				break;
+
+			if (*head == NULL)
+				break;
+			if (tmp->id == id) // 단일 리스트에 존재하는 id들만 입력시키면서 score는 그대로 가져옴
+			{
+				fprintf(eval_tmp, "   %0.lf        %.1lf\t%.1lf\t%.1lf\n", id, score1, score2, score3);
+				tmp = tmp->next;
+				if (tmp == NULL)
+					break;
+			}
+
+		}
+		fclose(eval_tmp); // 파일 갱신
+		fclose(eval_db); // 열어 줬던 파일 닫고
+		remove(eval_name); // 기존 파일 삭제
+		rename("eval.tmp", eval_name); // tmp 파일을 기존 파일로 이름 바꿈
+		tmp = *head; // tmp를 다시 헤드로
+	}
+	fclose(evalu);
+	printf("\n[ Success Delete Student Information]\n\n");
+}
+
+void change_st()
+{
+	FILE *st_tmp;
+	FILE *st;
+	IDlist *stid = NULL;
+	IDlist *stid2 = NULL;
+	char sel;
+	char new_name[20];
+	char first_name[20];
+	char last_name[20];
+	double search_id;
+	double id;
+	int s_cnt, ff;
+
+	while (1)
+	{
+		printf("\n------------------------------\n");
+		printf("1. Change Student First Name\n");
+		printf("2. Change Student Last Name\n");
+		printf("3. Change Student ID\n");
+		printf("4. Back to the Main Menu\n");
+		printf("------------------------------\n");
+		printf("---> ");
+		scanf("%c", &sel);
+		getchar();
+		if (sel == '4')
+			break;
+		else if (sel == '1' || sel == '2' || sel == '3')
+		{
+			switch (sel)
+			{
+			case '1': // first name 수정 ---> student.db만 건들면됨
+				while (1)
+				{
+					printf("\nIf you want to Back to the menu Input -1\n");
+					printf("Change First Name. Input Student ID : ");
+					scanf("%lf", &search_id);
+					getchar(); // 버퍼 제거
+					if (search_id == -1) // -1이라면 메뉴로 돌아감
+						break;
+
+					create_tree(&stid); // 학번이 존재하는지 search하기 위해 사용(위에서 만들어뒀던 함수)
+					if (search_tree(&stid, search_id) == 1) // 학번이 존재하는 경우
+					{
+						printf("\nInput New First Name : "); // 새로운 First Name을 입력 받음
+						scanf("%s", new_name);
+
+						st_tmp = fopen("student.tmp", "w");
+						fprintf(st_tmp, "   NAME                 STUDET-ID \n");
+
+						st = fopen("student.db", "r");
+						fseek(st, 34, 0);
+						while (1)
+						{
+							ff = fscanf(st, "%d %s %s %lf", &s_cnt, first_name, last_name, &id);
+							if (ff == EOF)
+								break;
+
+							if (id == search_id) // 학생 정보 변경을 원하는 학번을 찾았다면
+								strcpy(first_name, new_name); // first name을 변경해줌
+
+							fprintf(st_tmp, "%d %s %s\t\t%.0lf\n", s_cnt, first_name, last_name, id);
+						}
+						fclose(st_tmp); // st_tmp갱신
+						fclose(st);
+						remove("student.db"); // 기존의 student.db삭제
+						rename("student.tmp", "student.db"); // student.tmp를 student.db로 바꿈
+						printf("\n[ Success Change First Name]\n\n");
+					}
+					else // 학번이 존재하지 않는 경우
+						printf("\nDon't Exist Student-ID !\n");
+				}
+
+				break;
+				// case1 끝 (first name 수정)
+
+			case '2': // last name 수정 ---> student.db만 건들면됨
+					  // first name 수정과 매우 비슷
+				while (1)
+				{
+					printf("\nIf you want to Back to the menu Input -1\n");
+					printf("Change First Name. Input Student ID : ");
+					scanf("%lf", &search_id);
+					getchar();
+					if (search_id == -1) // -1 입력시 메뉴로 돌아감
+						break;
+
+					create_tree(&stid2); // 학번이 존재하는지 search하기 위해 사용(위에서 만들어뒀던 함수)
+					if (search_tree(&stid2, search_id) == 1) // 학번이 존재하는 경우
+					{
+						printf("\nInput New Last Name : "); // 새로운 Last name을 입력 받음
+						scanf("%s", new_name);
+
+						st_tmp = fopen("student.tmp", "w");
+						fprintf(st_tmp, "   NAME                 STUDET-ID \n");
+
+						st = fopen("student.db", "r");
+						fseek(st, 34, 0);
+						while (1)
+						{
+							ff = fscanf(st, "%d %s %s %lf", &s_cnt, first_name, last_name, &id);
+							if (ff == EOF)
+								break;
+
+							if (id == search_id) // 학생 정보 변경을 원하는 학번을 찾았다면
+								strcpy(last_name, new_name); // last_name을 변경해줌
+
+							fprintf(st_tmp, "%d %s %s\t\t%.0lf\n", s_cnt, first_name, last_name, id);
+						}
+						fclose(st_tmp); // st_tmp갱신
+						fclose(st);
+						remove("student.db"); // 기존의 student.db삭제
+						rename("student.tmp", "student.db"); // student.tmp를 student.db로 바꿈
+						printf("\n[ Success Change Last Name]\n\n");
+					}
+					else // 학번이 존재하지 않는 경우
+						printf("\nDon't Exist Student-ID !\n");
+				}
+				break;
+				// case2 끝 (last name 수정)
+
+			case '3': // 학번 수정 ---> evaluation.db 빼고 다 건들여야됨
+				while (1)
+				{
+					if (change_id() == 1) // 사용자가 변경을 멈추고 싶다면
+						break; // break
+				}
+
+				break;
+			}
+		}
+		else
+			printf("\nWrong Select!\n");
+	}
+}
+
+int change_id() // 학번 변경 함수
+{
+	STlist *stlist = NULL;
+	IDlist *stid = NULL;
+	double search_id;
+	FILE *st;
+	int i = 0, j = 0; // 제어를 위한 변수
+	int ff; // evaluate.db의 fscanf를 읽기 위한 변수
+	int s_cnt, s_id_len;
+	char s_id[30]; // Student ID를 받는 변수
+	char s_id_tmp[30]; // fscanf로 중복 검사를 위해 임시로 저장하는 변수
+	char first_name[20];
+	char last_name[20];
+
+	create_tree(&stid); // 학번이 존재하는지 search하기 위해 사용(위에서 만들어뒀던 함수)
+	printf("\nIf you want to Back to the menu Input -1\n");
+	printf("Change Student ID. Input Student ID : ");
+	scanf("%lf", &search_id);
+	getchar(); // 버퍼 제거
+	if (search_id == -1) // 사용자가 더이상 변경을 원하지 않는다면
+		return 1; // 1을 반환해줌
+	if (search_tree(&stid, search_id) == 1) // 학번이 존재하는 경우
+	{
+		printf("\nInput New Student ID"); // 새로운 ID를 입력 받음
+
+		// get_s_id() 함수와 거의다 비슷
+		printf("\nPlease enter ID number : "); // 학생 ID 입력 받기
+		while (1) // 학생 ID의 잘못된값 필터를 위한 while문
+		{
+			i = 0;
+			scanf("%s", s_id); // s_id 변수에 학생 ID 입력 받기
+			getchar();
+			st = fopen("student.db", "r"); // 밑에서 fscanf를 사용하기 위해 r모드로 열어줌
+
+										   // 여기서 fseek을 사용하는 이유는 student.db의 맨 위가 NAME, STUDENT-ID로
+										   // 되있기 때문에 fseek을 사용하지 않는다면 fscanf로 데이터를 읽어 올 수가 없다.
+			fseek(st, 34, 0);
+			strcpy(s_id_tmp, s_id); // 중복 검사를 위해 s_id_tmp에 s_id 값을 복사
+
+									// 중복 검사 while문 시작
+			while (1)
+			{
+				// student.db 에서 각각의 변수들에 대한 정보를 한줄씩 받아옴
+				ff = fscanf(st, "%d %s %s %s", &s_cnt, first_name, last_name, s_id);
+				s_id_len = strlen(s_id);
+
+				if (ff == EOF) // 중복 되지 않는 경우
+				{
+					i = 1;
+					break;
+				}
+
+				// student.db에서 읽어온 학생 ID 값이 s_id 변수에 저장되어 있는 상태이고
+				// 사용자가 등록을 원하는 s_id_tmp 와 중복 되는지 검사한다
+				if (strcmp(s_id_tmp, s_id) == 0)
+				{
+					// strcmp를 이용해 비교 후
+					// 중복이라면 에러 메세지 후 scanf를 이용해 s_id를 다시 받음
+					printf("\nID number %s already exist. Please enter again : ", s_id_tmp);
+					fclose(st);
+					break;
+				}
+			} // 중복검사 while문끝
+
+			if (i == 1) // 학생 ID 조건문들
+			{
+				if (atof(s_id_tmp) <= 0) // 학생 ID의 값이 음수이면 에러 메세지
+					printf("\n[-] Wrong Student ID!! \n\n");
+
+				else if (strlen(s_id_tmp) != s_id_len) // 함수 인자로 받은 학생 ID 길이와 값이 일치하지 않으면
+				{								  // 에러메세지
+					printf("[-] You enter %d digits ID number. \n", strlen(s_id_tmp));
+					printf("[-] You are required %d digits ID number. \n\n", s_id_len);
+				}
+
+				else // 학번이 정상이라면
+				{
+					// 단일 리스트로 student.db 연결
+					create_list(&stlist); // 위에서 만들어뒀던 함수
+
+										  // search_id를 s_id_tmp로 변경
+					change_list(&stlist, search_id, atof(s_id_tmp)); // 단일 리스트에서 학번 변경
+
+					rewrite_st(&stlist); // student.db 갱신 / 위에서 만들어뒀던 함수
+					rewrite_db2(&stlist); // rewrite_db함수와 매우 비슷
+					break;
+				}
+			}
+			fclose(st);
+		}
+	}
+	else
+		printf("\nDon't Exist Student-ID !\n");
+
+}
+
+void change_list(STlist **head, double search_id, double id) // 단일리스트에서 학번 변경
+{
+	STlist *tmp;
+
+	tmp = *head;
+
+	while (1)
+	{
+		if (tmp->id == search_id)
+		{
+			tmp->id = id;
+			break;
+		}
+		else
+			tmp = tmp->next;
+	}
+}
+
+void rewrite_db2(STlist **head)
+{
+	// rewrite_db 함수랑 약간 겹치는 부분이 있음
+	FILE *evalu;
+	FILE *eval_db;
+	FILE *eval_tmp;
+	int ff, ff2;
+	int num, per;
+	double id;
+	double score1, score2, score3;
+	char eval_name[20];
+	STlist *tmp;
+
+	tmp = *head;
+
+	// eval_name.db가 어떤것이 있는지 확인 후 수정
+	evalu = fopen("evaluation.db", "r");
+	while (1)
+	{
+		ff = fscanf(evalu, "%d %s %d", &num, eval_name, &per);
+		if (ff == EOF)
+			break;
+		strcpy(eval_name, strcat(eval_name, ".db"));
+
+		eval_db = fopen(eval_name, "r");
+		fseek(eval_db, 45, 0);
+
+		eval_tmp = fopen("eval.tmp", "w"); // tmp에 잠시 저장함
+		fprintf(eval_tmp, "   STUDENT-ID       score1   score2   score3\n");
+
+		while (1)
+		{
+			ff2 = fscanf(eval_db, "%lf %lf %lf %lf", &id, &score1, &score2, &score3);
+			if (ff2 == EOF)
+				break;
+
+			if (*head == NULL)
+				break;
+
+			if (tmp->id == id) // 단일리스트와 정보가 같다면
+			{ // 정보를 그대로 가져옴
+				fprintf(eval_tmp, "   %0.lf        %.1lf\t%.1lf\t%.1lf\n", id, score1, score2, score3);
+			}
+
+			else // 같지 않은 부분이 student-id를 수정한 부분임
+			{ // 수정된 id를 입력하고, score은 그대로 가져옴
+				fprintf(eval_tmp, "   %0.lf        %.1lf\t%.1lf\t%.1lf\n", tmp->id, score1, score2, score3);
+			}
+
+			tmp = tmp->next;
+			if (tmp == NULL)
+				break;
+
+		}
+		fclose(eval_tmp); // 파일 갱신
+		fclose(eval_db); // 열어 줬던 파일 닫고
+		remove(eval_name); // 기존 파일 삭제
+		rename("eval.tmp", eval_name); // tmp 파일을 기존 파일로 이름 바꿈
+		tmp = *head; // tmp를 다시 헤드로
+	}
+	fclose(evalu);
+	printf("\n[ Success Change Student ID]\n\n");
+}
+
+void change_eval_name()
+{
+	FILE *eval;
+	FILE *eval_tmp;
+	int ff, cnt = 1, i = 0, j = 0, k = 0;
+	int num, per;
+	char eval_list[8][20] = { { "Assignment" },{ "Project" },{ "Laboratory" },{ "Attendance" },{ "Participation" },
+	{ "Quiz" },{ "Midterm-Exam" },{ "Final-Exam" } };
+	char eval_name[20];
+	char cur_eval[8][20];
+	char old_eval[20];
+	char new_eval[20];
+	char sel;
+
+	while (1)
+	{
+		i = 0;
+		eval = fopen("evaluation.db", "r");
+		printf("\n\n--------------------------\n");
+		printf("Current Evaluation List\n"); // 현재 eval_name.db가 어떤 것들이 있는지 확인
+		while (1)
+		{
+			ff = fscanf(eval, "%d %s %d", &num, eval_name, &per);
+			if (ff == EOF)
+				break;
+			printf("%d. %s\n", cnt, eval_name);
+			cnt++;
+		}
+		printf("--------------------------\n");
+		printf("---> ");
+		scanf("%c", &sel);
+		getchar(); // 버퍼 제거
+
+		if ((int)sel < 49 || (int)sel>57) // 선택이 1~9까지 숫자가 아니라면
+		{
+			i = cnt = 1; // 에러처리 -> i를 1로 셋팅
+			printf("\nWrong Select!\n");
+			fclose(eval);
+		}
+		else // 숫자가 맞다면
+		{
+			if (sel - '0' >= cnt) // 선택이 범위 밖이라면
+			{
+				i = cnt = 1; // 에러처리 -> i를 1로 셋팅
+				printf("\nWrong Select!\n");
+				fclose(eval);
+			}
+		}
+		if (i == 0) // 정상이라면
+			break; // while문을 빠져 나감
+	} // while문의 끝
+	fclose(eval);
+
+	eval = fopen("evaluation.db", "r");
+	for (i = 0; i < sel - '0'; i++) // 사용자가 선택한 db name이 뭔지 알아냄
+		fscanf(eval, "%d %s %d", &num, old_eval, &per);
+	fclose(eval);
+
+
+	i = 0;
+	eval = fopen("evaluation.db", "r");
+	while (1)
+	{
+		ff = fscanf(eval, "%d %s %d", &num, eval_name, &per);
+		if (ff == EOF)
+			break;
+		strcpy(cur_eval[i], eval_name);
+		i++;
+	}
+	fclose(eval);
+
+
+	while (1)
+	{
+		j = 0, k = 0;
+		printf("\n\n------------------\n");
+		for (i = 0; i < 8; i++)
+		{
+			if (strcmp(cur_eval[j], eval_list[i]) != 0) // 현재 evaluation.db에 갖고있는 목록이 아니라면
+				printf("%d. %s\n", i + 1, eval_list[i]);
+			else // evaluation.db가 갖고있는 목록이라면 출력 안함
+				j++;
+		}
+		printf("------------------");
+		printf("\nSelect New Evaluaion : ");
+		scanf("%c", &sel);
+		getchar();
+		if ((int)sel < 49 || (int)sel>57) // 선택이 1~9까지 숫자가 아니라면
+		{
+			k = 1;
+			printf("\nWrong Select!\n");
+		}
+
+		else
+			switch (sel)
+			{
+			case '1':
+				strcpy(new_eval, "Assignment");
+				break;
+			case '2':
+				strcpy(new_eval, "Project");
+				break;
+			case '3':
+				strcpy(new_eval, "Laboratory");
+				break;
+			case '4':
+				strcpy(new_eval, "Attendance");
+				break;
+			case '5':
+				strcpy(new_eval, "Participation");
+				break;
+			case '6':
+				strcpy(new_eval, "Quiz");
+				break;
+			case '7':
+				strcpy(new_eval, "Midterm-Exam");
+				break;
+			case '8':
+				strcpy(new_eval, "Final-Exam");
+				break;
+			}
+
+		if (k == 0)
+			break;
+	}
+
+	// old_eval을 new_eval로 바꿔줌
+	eval_tmp = fopen("evaluation.tmp", "w");
+	eval = fopen("evaluation.db", "r");
+	while (1)
+	{
+		ff = fscanf(eval, "%d %s %d", &num, eval_name, &per);
+		if (ff == EOF)
+			break;
+
+		if (strcmp(eval_name, old_eval) == 0) // 바꿀 대상이라면
+			fprintf(eval_tmp, "%d %s %d\n", num, new_eval, per);
+		else
+			fprintf(eval_tmp, "%d %s %d\n", num, eval_name, per);
+	}
+	fclose(eval_tmp);
+	fclose(eval);
+	remove("evaluation.db");
+	rename("evaluation.tmp", "evaluation.db");
+
+	strcpy(old_eval, strcat(old_eval, ".db"));
+	strcpy(new_eval, strcat(new_eval, ".db"));
+	rename(old_eval, new_eval);
+
+}
+
+void create_integ_db()
+{
+	FILE *intdb; // integ.db를 만들기 위한 변수 --> 이름 학번 퍼센트 저장
+	FILE *intdb2; // integ.db2를 만들기 위한 변수 --> 학번 평가항목별 총점 저장
+	FILE *eval; // evaluation.db를 불러들이기 위한 변수
+	FILE *st; // student.db를 불러들이기 위한 변수
+	FILE *eval_db; // eval_name.db를 불러들이기 위한 변수
+	int ff, ff2, ff3, num, per, s_cnt;
+	double st_id, ev_id;
+	double score1, score2, score3, total, ev_total = 0, st_total = 0;
+	double grade_per, res_per = 0;
+	char eval_name[30];
+	char first_name[10];
+	char last_name[20];
+
+	intdb = fopen("integ.db", "w");
+	intdb2 = fopen("integ2.db", "w");
+	fprintf(intdb, "Name\tStudent-ID\t");
+	fprintf(intdb2, "Student-ID\t");
+	fclose(intdb);
+	fclose(intdb2);
+
+	eval = fopen("evaluation.db", "r");
+	intdb = fopen("integ.db", "a");
+	intdb2 = fopen("integ2.db", "a");
+	while (1)
+	{
+		ff = fscanf(eval, "%d %s %d", &num, eval_name, &per);
+		if (ff == EOF)
+			break;
+		strcpy(eval_name, strcat(eval_name, "'s Total Score\t")); // ex) Final-Exam's Total Score
+		fprintf(intdb2, eval_name);
+	}
+	fprintf(intdb2, "\n");
+	fprintf(intdb, "Percentage\n");
+	fclose(intdb);
+	fclose(intdb2);
+	fclose(eval);
+	// ex) Name	Student-ID	Percentage	Grade --> integ.db
+	// ex) Student-ID	Final-Exam's Total Score	~~'sTotal Score --> integ2.db
+
+	st = fopen("student.db", "r");
+	intdb = fopen("integ.db", "a");
+	intdb2 = fopen("integ2.db", "a");
+	fseek(st, 34, 0);
+
+	while (1)
+	{
+		ff = fscanf(st, "%d %s %s %lf", &num, first_name, last_name, &st_id);
+		if (ff == EOF)
+			break;
+		fprintf(intdb, "%s%s\t%.0lf\t", first_name, last_name, st_id);
+		// integ.db에 Name하고 Student-ID까지 입력됨
+		fprintf(intdb2, "%.0lf\t", st_id);
+		// integ2.db에 Student-ID 입력됨
+
+		eval = fopen("evaluation.db", "r");
+		while (1) // eval_name.db에 접근
+		{
+			ff2 = fscanf(eval, "%d %s %d", &num, eval_name, &per);
+			if (ff2 == EOF)
+				break;
+			st_total = per * 3; // 학생이 얻을수 있는 최고 점수를 st_total에 저장
+			strcpy(eval_name, strcat(eval_name, ".db")); // ex) Final-Exam.db
+			eval_db = fopen(eval_name, "r");
+			fseek(eval_db, 45, 0);
+
+			while (1) // 학생별 토탈 점수를 얻기 위한 while문
+			{
+				ff3 = fscanf(eval_db, "%lf %lf %lf %lf", &ev_id, &score1, &score2, &score3);
+				if (ff3 == EOF)
+					break;
+				if (st_id == ev_id)
+				{
+					total = score1 + score2 + score3;
+					fprintf(intdb2, "%.1lf\t\t\t\t", total);
+					break;
+				}
+
+			} // 제일 안쪽 while문 끝
+			  // total 점수 입력 완료
+			fclose(eval_db);
+
+			// 비례식으로 퍼센트를 구함
+			// 300(100+100+100) : 얻은 점수 = st_total : x
+			// x = (얻은점수 * st_total)/300 ---> (x/st_total)*per = 최종 퍼센트
+			grade_per = (total*st_total) / 300;
+			grade_per = (grade_per / st_total) * per;
+			res_per += grade_per;
+
+		} // 중간 while문 끝
+		fprintf(intdb2, "\n");
+		fclose(eval);
+
+		fprintf(intdb, "%.1lf\n", res_per);
+		st_total = 0;
+		res_per = 0;
+		// 퍼센트까지 입력 완료
+	} // 제일 바깥 while문 끝
+
+	fclose(intdb);
+	fclose(intdb2);
+	fclose(st);
+
+	// 상대 평가로 학점을 매기기 위해서 퍼센트로 등수를 매김 (integ.db)
+	write_rank();
+}
+
+void write_rank()
+{
+	FILE *integ;
+	FILE *tmp;
+	int i, j, rank=1, dupl=0, s_cnt, ff;
+	char name[30];
+	double id, per;
+	double top_id = 0, top_per = 0;
+	double sort_per[1000][2]; // 최대 1000명의 학생까지 커버 가능
+	double tmp_per[1][2];
+
+	s_cnt = get_s_cnt();
+	integ = fopen("integ.db", "r");
+	fseek(integ, 28, 0); // 디버깅으로 확인된 값
+
+	for (i = 0; i < get_s_cnt(); i++) // 학생 수만큼 for문 돌림
+	{
+		fscanf(integ, "%s %lf %lf", name, &id, &per);
+		sort_per[i][0] = id; // i의 0번째에는 id들을 셋팅
+		sort_per[i][1] = per; // i의 1번째에는 퍼센트를 셋팅
+	}
+	fclose(integ);
+
+	// 등수를 매기기 위해서 내림차순으로 퍼센트를 정렬함 (선택정렬)
+	for (i = 0; i < s_cnt; i++)
+	{
+		top_id = sort_per[i][0]; // 초기 가장 높은 퍼센트를 셋팅
+		top_per = sort_per[i][1];
+
+		for (j = i; j < get_s_cnt(); j++)
+		{
+			if (top_per < sort_per[j][1]) // 다음 퍼센트가 가장 높은 퍼센트보다 크다면
+			{
+				top_id = sort_per[j][0];
+				top_per = sort_per[j][1];
+				// swap
+				tmp_per[0][0] = sort_per[i][0];
+				tmp_per[0][1] = sort_per[i][1];
+				sort_per[i][0] = top_id;
+				sort_per[i][1] = top_per;
+				sort_per[j][0] = tmp_per[0][0];
+				sort_per[j][1] = tmp_per[0][1];
+
+			}
+		}
+	}
+	// sort_per에 퍼센트를 내림차순으로 정렬 완료 (선택정렬)
+
+	tmp = fopen("integ.tmp", "w");
+	fprintf(tmp, "Name\tStudent-ID\tPercentage\tRank\n");
+
+	for (i = 0; i < s_cnt; i++) // rank 매기는 for문
+	{
+		integ = fopen("integ.db", "r");
+		fseek(integ, 28, 0);
+
+		for (j = 0; j < s_cnt; j++)
+		{
+			fscanf(integ, "%s %lf %lf", name, &id, &per);
+			if (id == sort_per[i][0])
+			{
+				fprintf(tmp, "%s\t%.0lf\t%.1lf\t\t%d\n", name, id, per, rank);
+				fclose(integ);
+				break;
+			}
+		}
+
+		if (i != s_cnt - 1) // i+1이 배열 범위 밖으로 나가는것을 방지
+		{
+			if (sort_per[i][1] == sort_per[i + 1][1]) // 만약 퍼센트가 같다면 rank를 똑같이 매겨야됨
+				dupl++; // 중복값 증가
+			else
+			{
+				rank++;
+				rank = rank + dupl; // 중복값까지 더해주고
+				dupl = 0; // 중복값을 다시 0으로 초기화
+			}
+		}
+
+	} // for문 끝
+	fclose(tmp);
+	// rank 매기는거 끝
+
+	remove("integ.db");
+	rename("integ.tmp", "integ.db");
+
+	// 학점 매기는거 시작
+	// 상위 20% --> A+ / 30% --> A / 60% --> B+ / 70% --> B / 10%미만 --> F / 나머지 C
+
+	tmp = fopen("integ.tmp", "w");
+	fprintf(tmp, "Name\tStudent-ID\tPercentage\tRank\tGrade\n");
+
+	integ = fopen("integ.db", "r");
+	fseek(integ, 31, 0); // 디버깅으로 확인된 값
+	while (1)
+	{
+		ff = fscanf(integ, "%s %lf %lf %d", name, &id, &per, &rank);
+		if (ff == EOF)
+			break;
+		fprintf(tmp, "%s\t%.0lf\t%.1lf\t\t%d\t", name, id, per, rank);
+
+		if (rank <= floor(s_cnt*0.2)) // rank가 상위 20퍼는 A+
+			fprintf(tmp, "A+\n");
+		else if (rank <= floor(s_cnt*0.3)) // rank가 상위 30퍼는 A
+			fprintf(tmp, "A\n");
+		else if (rank <= floor(s_cnt*0.6)) // rank가 상위 60퍼는 B+
+			fprintf(tmp, "B+\n");
+		else if (rank <= floor(s_cnt*0.7)) // rank가 상위 70퍼는 B
+			fprintf(tmp, "B\n");
+		else if (rank <= floor(s_cnt*0.9)) // rank가 상위 90퍼는 C+
+			fprintf(tmp, "C+\n");
+		else // 나머지 F
+			fprintf(tmp, "F\n");
+	}
+	fclose(integ);
+	fclose(tmp);
+	remove("integ.db");
+	rename("integ.tmp", "integ.db");
+}
+
+int print_menu()
+{
+	char sel;
+
+	while (1)
+	{
+		printf("\n\nYou Select Print of Student Information\n");
+		printf("-------------------------------------------\n");
+		printf("1. Print Integrated All Student Information\n");
+		printf("2. Print Select All Student Information\n");
+		printf("3. Print Only One Student Information\n");
+		printf("4. Back to the Main Menu\n");
+		printf("-------------------------------------------\n");
+		printf("---> ");
+		scanf("%c", &sel);
+		getchar();
+		switch (sel)
+		{
+		case '1': // 정렬 후 학생 정보 전체 출력
+				// 이름 / 학번 /  토탈 퍼센트 / 학점 / 평가항목별 총점
+			sort_menu();
+			break;
+		case '2': // 사용자가 출력을 원하는 정보만 출력
+			select_st_inf();
+			break;
+		case '3':  // 딱 한명의 학생 정보만 출력함
+			prt_one_st();
+			break;
+		case '4': // 메인으로 돌아감
+			return 4;
+		default:
+			printf("\nWrong Select!\n");
+		}
+	}
+}
+
+void sort_menu()
+{
+	int i = 0;
+	char sel;
+	Integ *inf;
+
+	while (1)
+	{
+		inf = NULL;
+		create_integ_list(&inf); // integ.db를 단일리스트로 연결
+
+		printf("\n\nSelect Sorting Menu\n");
+		printf("------------------------------\n");
+		printf("1. Grade ( Ascending )\n"); // 학점 오름차순 F->C->B->A...
+		printf("2. Grade ( Descending )\n"); // 학점 내림차순 A->B->C->F ...
+		printf("3. Name ( Ascending )\n");
+		printf("4. Name ( Descending )\n");
+		printf("5. Student-ID ( Ascending )\n");
+		printf("6. Student-ID ( Descending )\n");
+		printf("7. Back to the Menu\n");
+		printf("------------------------------\n");
+		printf("---> ");
+		scanf("%c", &sel);
+		getchar();
+		switch (sel)
+		{
+		case '1': // 학점 오름차순 F->C->B->A...
+			prt_grade_a(&inf);
+			break;
+		case '2': // 학점 내림차순 A->B->C...
+			prt_grade_d(&inf); 
+			break;
+		case '3': // 이름 오름차순 가->나->다...
+			prt_name_a(&inf);
+			break;
+		case '4': // 이름 내림차순 다->나->가...
+			prt_name_d(&inf);
+			break;
+		case '5': // Student-ID 오름차순 1111->2222->3333...
+			prt_id_a(&inf);
+			break;
+		case '6':
+			prt_id_d(&inf); // Student-ID 내림차순 333->222->111...
+			break;
+		case '7':
+			i = 7;
+			break;
+		default:
+			printf("\n\nWrong Select!\n");
+		}
+		if (i == 7)
+			break;
+	}
+}
+
+void create_integ_list(Integ **head) // integ.db를 단일리스트로 연결 시킴
+{
+	Integ *tmp;
+	Integ *newNode;
+	FILE *integ;
+	char name[30];
+	double id, per;
+	int rank,ff;
+	char grade[10];
+
+	tmp = *head;
+	integ = fopen("integ.db", "r");
+	fseek(integ, 37, 0); // 디버깅으로 확인된 값
+	while (1)
+	{
+		ff = fscanf(integ,"%s %lf %lf %d %s", name, &id, &per, &rank, grade);
+		if (ff == EOF)
+			break;
+
+		newNode = (Integ *)malloc(sizeof(Integ));
+		strcpy(newNode->name, name);
+		newNode->id = id;
+		newNode->per = per;
+		newNode->rank = rank;
+		strcpy(newNode->grade, grade);
+		newNode->next = NULL;
+
+		if (*head == NULL)
+		{
+			*head = newNode;
+			tmp = newNode;
+		}
+		else
+		{
+			tmp->next = newNode;
+			tmp = newNode;
+		}
+	}
+	fclose(integ);
+}
+
+void prt_grade_a(Integ **head) // 학점 오름차순 F->C->B->A...
+{
+	// integ.db가 이미 학점 내림차순으로 정렬되있음 --> 역순 출력
+	Integ *tmp;
+	Integ *pre;
+	Integ *ppre;
+	FILE *eval;
+	FILE *integ2;
+	char eval_name[20];
+	char ttmp[100];
+	int ff,num,per2, eval_cnt=0, i,j;
+	double id, score[10];
+
+	tmp = *head;
+	pre = NULL;
+	// 단일 연결리스트 역순으로 연결 (책 131쪽)
+	while (tmp != NULL)
+	{
+		ppre = pre;
+		pre = tmp;
+		tmp = tmp->next;
+		pre->next = ppre;
+	}
+	// pre에 역순으로 저장되어있음
+
+	eval = fopen("evaluation.db", "r");
+	// 이름 / 학번 / 토탈 퍼센트 / 학점 / 평가항목별 총점
+	printf("\n\n--------------------------------------------------------------------------------------\n");
+	printf("\nPrint Grade Ascending\n");
+	printf("\nName\tStudent-ID\tPercentage\tRank\tGrade\t");
+	while (1)
+	{
+		ff = fscanf(eval, "%d %s %d", &num, eval_name, &per2);
+		if (ff == EOF)
+			break;
+		printf("%s score\t", eval_name);
+		eval_cnt++;
+	}
+	fclose(eval);
+	printf("\n");
+	while (pre != NULL)
+	{
+		printf("%s\t%.0lf\t%.1lf\t\t%d\t%s\t", pre->name, pre->id, pre->per, pre->rank, pre->grade);
+		integ2 = fopen("integ2.db", "r");
+		fgets(ttmp, 100, integ2);
+		while (1)
+		{
+			fscanf(integ2,"%lf", &id);
+			for (i = 0; i < eval_cnt; i++)
+				fscanf(integ2,"%lf", &score[i]);
+
+			if (pre->id == id)
+			{
+				for (j = 0; j < eval_cnt; j++)
+					printf("%.1lf\t\t\t", score[j]);
+				printf("\n");
+				break;
+			}
+			
+		}
+		fclose(integ2);
+		pre = pre->next;
+	}
+	printf("\n\n--------------------------------------------------------------------------------------\n");
+}
+
+void prt_grade_d(Integ **head) // 학점 내림차순 A->B->C...
+{
+	// 이미 셋팅되어 있음
+	Integ *tmp;
+	FILE *eval;
+	FILE *integ2;
+	int num, per2,ff,eval_cnt=0,i,j;
+	char eval_name[20];
+	char ttmp[100];
+	double id, score[10];
+
+	tmp = *head;
+	eval = fopen("evaluation.db", "r");
+	// 이름 / 학번 / 토탈 퍼센트 / 학점 / 평가항목별 총점
+	printf("\n\n--------------------------------------------------------------------------------------\n");
+	printf("\nPrint Grade Ascending\n");
+	printf("\nName\tStudent-ID\tPercentage\tRank\tGrade\t");
+	while (1)
+	{
+		ff = fscanf(eval, "%d %s %d", &num, eval_name, &per2);
+		if (ff == EOF)
+			break;
+		printf("%s score\t", eval_name);
+		eval_cnt++;
+	}
+	fclose(eval);
+	printf("\n");
+	while (tmp != NULL)
+	{
+		printf("%s\t%.0lf\t%.1lf\t\t%d\t%s\t", tmp->name, tmp->id, tmp->per, tmp->rank, tmp->grade);
+		integ2 = fopen("integ2.db", "r");
+		fgets(ttmp, 100, integ2);
+		while (1)
+		{
+			fscanf(integ2, "%lf", &id);
+			for (i = 0; i < eval_cnt; i++)
+				fscanf(integ2, "%lf", &score[i]);
+
+			if (tmp->id == id)
+			{
+				for (j = 0; j < eval_cnt; j++)
+					printf("%.1lf\t\t\t", score[j]);
+				printf("\n");
+				break;
+			}
+
+		}
+		fclose(integ2);
+		tmp = tmp->next;
+	}
+	printf("\n\n--------------------------------------------------------------------------------------\n");
+}
+
+void prt_name_a(Integ **head) // 이름 오름차순 가->나->다...
+{
+	Integ *tmp;
+	int i,s_cnt,j, num, per2, eval_cnt=0, ff;
+	char name[1000][30];
+	char name_tmp[30];
+	char eval_name[30];
+	char ttmp[100];
+	FILE *eval, *integ2;
+	double id, score[10];
+
+	tmp = *head;
+	s_cnt = get_s_cnt();
+
+	for (i = 0; i < s_cnt; i++)
+	{
+		strcpy(name[i], tmp->name);
+		tmp = tmp->next;
+	}
+	// name[i]에 이름들 셋팅
+
+	// 정렬 시작 (선택 정렬)
+	for (i = 0; i < s_cnt; i++)
+	{
+		for (j = i; j < s_cnt; j++)
+		{
+			if (strcmp(name[i], name[j])>0) // 앞에 이름이 사전순으로 더 뒤쪽이면
+			{
+				// swap
+				strcpy(name_tmp, name[j]);
+				strcpy(name[j], name[i]);
+				strcpy(name[i], name_tmp);
+			}
+		}
+	}
+	// 정렬 완료
+
+	eval = fopen("evaluation.db", "r");
+	// 이름 / 학번 / 토탈 퍼센트 / 학점 / 평가항목별 총점
+	printf("\n\n--------------------------------------------------------------------------------------\n");
+	printf("\nPrint Name Ascending\n");
+	printf("\nName\tStudent-ID\tPercentage\tRank\tGrade\t");
+	while (1)
+	{
+		ff = fscanf(eval, "%d %s %d", &num, eval_name, &per2);
+		if (ff == EOF)
+			break;
+		printf("%s score\t", eval_name);
+		eval_cnt++;
+	}
+	fclose(eval);
+	printf("\n");
+
+	for (i = 0; i < s_cnt; i++)
+	{
+		tmp = *head;
+		printf("%s\t", name[i]);
+		while (tmp != NULL)
+		{
+			if (strcmp(name[i], tmp->name) == 0)
+			{
+				printf("%.0lf\t%.1lf\t\t%d\t%s\t", tmp->id, tmp->per, tmp->rank, tmp->grade);
+				break;
+			}
+			else
+				tmp = tmp->next;
+		}
+
+		integ2 = fopen("integ2.db", "r");
+		fgets(ttmp, 100, integ2);
+		while (1)
+		{
+			fscanf(integ2, "%lf", &id);
+			for (j = 0; j < eval_cnt; j++)
+				fscanf(integ2, "%lf", &score[j]);
+
+			if (tmp->id == id)
+			{
+				for (j = 0; j < eval_cnt; j++)
+					printf("%.1lf\t\t\t", score[j]);
+				printf("\n");
+				break;
+			}
+
+		}
+		fclose(integ2);
+	}
+	printf("\n\n--------------------------------------------------------------------------------------\n");
+}
+
+void prt_name_d(Integ **head) // 이름 내림차순 다->나->가...
+{
+	// 이름 오름차순하고 다 똑같은데 비교 부등호만 반대
+	Integ *tmp;
+	int i, s_cnt, j, num, per2, eval_cnt = 0, ff;
+	char name[1000][30];
+	char name_tmp[30];
+	char eval_name[30];
+	char ttmp[100];
+	FILE *eval, *integ2;
+	double id, score[10];
+
+	tmp = *head;
+	s_cnt = get_s_cnt();
+
+	for (i = 0; i < s_cnt; i++)
+	{
+		strcpy(name[i], tmp->name);
+		tmp = tmp->next;
+	}
+	// name[i]에 이름들 셋팅
+
+	// 정렬 시작 (선택 정렬)
+	for (i = 0; i < s_cnt; i++)
+	{
+		for (j = i; j < s_cnt; j++)
+		{
+			if (strcmp(name[i], name[j])<0) // 앞에 이름이 사전순으로 더 앞쪽이면
+			{
+				// swap
+				strcpy(name_tmp, name[j]);
+				strcpy(name[j], name[i]);
+				strcpy(name[i], name_tmp);
+			}
+		}
+	}
+	// 정렬 완료
+
+	eval = fopen("evaluation.db", "r");
+	// 이름 / 학번 / 토탈 퍼센트 / 학점 / 평가항목별 총점
+	printf("\n\n--------------------------------------------------------------------------------------\n");
+	printf("\nPrint Name Ascending\n");
+	printf("\nName\tStudent-ID\tPercentage\tRank\tGrade\t");
+	while (1)
+	{
+		ff = fscanf(eval, "%d %s %d", &num, eval_name, &per2);
+		if (ff == EOF)
+			break;
+		printf("%s score\t", eval_name);
+		eval_cnt++;
+	}
+	fclose(eval);
+	printf("\n");
+
+	for (i = 0; i < s_cnt; i++)
+	{
+		tmp = *head;
+		printf("%s\t", name[i]);
+		while (tmp != NULL)
+		{
+			if (strcmp(name[i], tmp->name) == 0)
+			{
+				printf("%.0lf\t%.1lf\t\t%d\t%s\t", tmp->id, tmp->per, tmp->rank, tmp->grade);
+				break;
+			}
+			else
+				tmp = tmp->next;
+		}
+
+		integ2 = fopen("integ2.db", "r");
+		fgets(ttmp, 100, integ2);
+		while (1)
+		{
+			fscanf(integ2, "%lf", &id);
+			for (j = 0; j < eval_cnt; j++)
+				fscanf(integ2, "%lf", &score[j]);
+
+			if (tmp->id == id)
+			{
+				for (j = 0; j < eval_cnt; j++)
+					printf("%.1lf\t\t\t", score[j]);
+				printf("\n");
+				break;
+			}
+
+		}
+		fclose(integ2);
+	}
+	printf("\n\n--------------------------------------------------------------------------------------\n");
+}
+
+void prt_id_a(Integ **head) // Student-ID 오름차순 1111->2222->3333...
+{
+	Integ *tmp;
+	int i, s_cnt, j, num, per2, eval_cnt = 0, ff;
+	double sort_id[1000];
+	double tmp_id;
+	char eval_name[30];
+	char ttmp[100];
+	FILE *eval, *integ2;
+	double id, score[10];
+
+	tmp = *head;
+	s_cnt = get_s_cnt();
+
+	for (i = 0; i < s_cnt; i++)
+	{
+		sort_id[i] = tmp->id;
+		tmp = tmp->next;
+	}
+	// sort_id[i]에 Student-ID들 셋팅
+
+	// 정렬 시작 (버블 정렬)
+	for (i = s_cnt-1; i >0; i--)
+	{
+		for (j = 0; j < i; j++)
+		{
+			if (sort_id[j] > sort_id[j + 1]) // 앞에가 뒤에보다 크다면
+			{
+				//swap
+				tmp_id = sort_id[j];
+				sort_id[j] = sort_id[j+1];
+				sort_id[j+1] = tmp_id;
+			}
+		}
+	}
+	// 정렬 완료
+
+	eval = fopen("evaluation.db", "r");
+	// 이름 / 학번 / 토탈 퍼센트 / 학점 / 평가항목별 총점
+	printf("\n\n--------------------------------------------------------------------------------------\n");
+	printf("\nPrint Name Ascending\n");
+	printf("\nName\tStudent-ID\tPercentage\tRank\tGrade\t");
+	while (1)
+	{
+		ff = fscanf(eval, "%d %s %d", &num, eval_name, &per2);
+		if (ff == EOF)
+			break;
+		printf("%s score\t", eval_name);
+		eval_cnt++;
+	}
+	fclose(eval);
+	printf("\n");
+
+	for (i = 0; i < s_cnt; i++)
+	{
+		tmp = *head;
+		while (tmp != NULL)
+		{
+			if (sort_id[i] == tmp->id)
+			{
+				printf("%s\t%.0lf\t%.1lf\t\t%d\t%s\t", tmp->name, tmp->id, tmp->per, tmp->rank, tmp->grade);
+				break;
+			}
+			else
+				tmp = tmp->next;
+		}
+
+		integ2 = fopen("integ2.db", "r");
+		fgets(ttmp, 100, integ2);
+		while (1)
+		{
+			fscanf(integ2, "%lf", &id);
+			for (j = 0; j < eval_cnt; j++)
+				fscanf(integ2, "%lf", &score[j]);
+
+			if (tmp->id == id)
+			{
+				for (j = 0; j < eval_cnt; j++)
+					printf("%.1lf\t\t\t", score[j]);
+				printf("\n");
+				break;
+			}
+
+		}
+		fclose(integ2);
+	}
+	printf("\n\n--------------------------------------------------------------------------------------\n");
+}
+
+void prt_id_d(Integ **head) // Student-ID 내림차순 333->222->111...
+{
+	// prt_id_a 함수와 다똑같고 비교 부등호만 반대
+	Integ *tmp;
+	int i, s_cnt, j, num, per2, eval_cnt = 0, ff;
+	double sort_id[1000];
+	double tmp_id;
+	char eval_name[30];
+	char ttmp[100];
+	FILE *eval, *integ2;
+	double id, score[10];
+
+	tmp = *head;
+	s_cnt = get_s_cnt();
+
+	for (i = 0; i < s_cnt; i++)
+	{
+		sort_id[i] = tmp->id;
+		tmp = tmp->next;
+	}
+	// sort_id[i]에 Student-ID들 셋팅
+
+	// 정렬 시작 (버블 정렬)
+	for (i = s_cnt - 1; i >0; i--)
+	{
+		for (j = 0; j < i; j++)
+		{
+			if (sort_id[j] < sort_id[j + 1]) // 앞에가 뒤에보다 작다면
+			{
+				//swap
+				tmp_id = sort_id[j];
+				sort_id[j] = sort_id[j + 1];
+				sort_id[j + 1] = tmp_id;
+			}
+		}
+	}
+	// 정렬 완료
+
+	eval = fopen("evaluation.db", "r");
+	// 이름 / 학번 / 토탈 퍼센트 / 학점 / 평가항목별 총점
+	printf("\n\n--------------------------------------------------------------------------------------\n");
+	printf("\nPrint Name Ascending\n");
+	printf("\nName\tStudent-ID\tPercentage\tRank\tGrade\t");
+	while (1)
+	{
+		ff = fscanf(eval, "%d %s %d", &num, eval_name, &per2);
+		if (ff == EOF)
+			break;
+		printf("%s score\t", eval_name);
+		eval_cnt++;
+	}
+	fclose(eval);
+	printf("\n");
+
+	for (i = 0; i < s_cnt; i++)
+	{
+		tmp = *head;
+		while (tmp != NULL)
+		{
+			if (sort_id[i] == tmp->id)
+			{
+				printf("%s\t%.0lf\t%.1lf\t\t%d\t%s\t", tmp->name, tmp->id, tmp->per, tmp->rank, tmp->grade);
+				break;
+			}
+			else
+				tmp = tmp->next;
+		}
+
+		integ2 = fopen("integ2.db", "r");
+		fgets(ttmp, 100, integ2);
+		while (1)
+		{
+			fscanf(integ2, "%lf", &id);
+			for (j = 0; j < eval_cnt; j++)
+				fscanf(integ2, "%lf", &score[j]);
+
+			if (tmp->id == id)
+			{
+				for (j = 0; j < eval_cnt; j++)
+					printf("%.1lf\t\t\t", score[j]);
+				printf("\n");
+				break;
+			}
+
+		}
+		fclose(integ2);
+	}
+	printf("\n\n--------------------------------------------------------------------------------------\n");
+}
+
+void select_st_inf() 
+{
+	FILE *eval, *integ, *integ2;
+	int i, j=0, r=0, k,num,per,ff,s_cnt, rank, eval_cnt=0;
+	double id, percen, score;
+	char sel='a', tmp_sel='a';
+	char select[50] = { 0 }; // 사용자가 어떤 것들을 선택했는지 저장
+	char res_sel[50];
+	char eval_name[30];
+	char name[30], grade[10];
+	char ttmp[100], ttmp2[100];
+
+	while (1)
+	{
+		j = 0;
+		printf("\nYou Select Print selected student information\n");
+		printf("------------------------------------------------\n");
+		printf("1. Name\n");
+		printf("2. Student-ID\n");
+		printf("3. Percentage\n");
+		printf("4. Rank\n");
+		printf("5. Grade\n");
+		printf("6. Total Score\n");
+		printf("7. Back to the menu");
+		printf("\nIf you finish select menu, Please Input 0\n");
+		printf("ex) 1 3 5 0 --> Name / Percentage / Grade\n");
+		printf("------------------------------------------------\n");
+		printf("---> ");
+		while (sel != '\n')
+		{
+			scanf("%c", &sel);
+			select[j] = sel; // select 배열에 사용자가 입력한 값들을 다 넣음 ex) 1 3 5 0
+			j++;
+		}
+		for (i = 0; i < j-1; i++)
+		{
+			if (select[i] == '7') // 전 메뉴로 돌아감
+			{
+				r = 7; // 전 메뉴로 돌아가기 위해 r을 7로 제어
+				break;
+			}
+
+			else if (select[i] != '0' && select[i] != '1' && select[i] != '2' && select[i] != '3' && select[i] != '4' 
+				&& select[i] != '5' && select[i] != '6' && select[i] != ' ')
+				// 정의 되지 않은 문자 입력시
+			{
+				printf("\nWrong Select!\n");
+				sel = 'a';
+				r = 8; // 오류를 위해 r을 8로 제어
+				break;
+			}
+		}
+		if (r == 7) // 전 메뉴로 돌아감
+			break;
+
+		if (r != 8) // 사용자의 선택이 정상이라면 출력
+		{
+			sel = 'a';
+			i = 1, r = 0;
+			printf("\n\n--------------------------------------------------------------------------------------\n");
+			tmp_sel = select[0];
+			while (tmp_sel != '0') // 0을 만나지 않을때까지
+			{
+				if (tmp_sel == '1') // 1이라면 Name 메뉴 출력
+				{
+					printf("Name\t");
+					res_sel[r] = tmp_sel; // 결과 select에 사용자 선택 select를 넣어줌
+					r++;
+				}
+				if (tmp_sel == '2') // 2라면 Student-ID 메뉴 출력
+				{
+					printf("Student-ID\t");
+					res_sel[r] = tmp_sel; // 결과 select에 사용자 선택 select를 넣어줌
+					r++;
+				}
+				if (tmp_sel == '3') // 3이라면 퍼센트 메뉴 출력
+				{
+					printf("Percentage\t");
+					res_sel[r] = tmp_sel; // 결과 select에 사용자 선택 select를 넣어줌
+					r++;
+				}
+				if (tmp_sel == '4') // 4라면 순위 메뉴 출력
+				{
+					printf("Rank\t");
+					res_sel[r] = tmp_sel; // 결과 select에 사용자 선택 select를 넣어줌
+					r++;
+				}
+				if (tmp_sel == '5') // 5라면 학점 메뉴 출력
+				{
+					printf("Grade\t");
+					res_sel[r] = tmp_sel; // 결과 select에 사용자 선택 select를 넣어줌
+					r++;
+				}
+				if (tmp_sel == '6') // 6이라면 평가항목별 점수 메뉴 출력
+				{
+					res_sel[r] = tmp_sel; // 결과 select에 사용자 선택 select를 넣어줌
+					r++;
+					eval = fopen("evaluation.db", "r");
+					while (1)
+					{
+						ff = fscanf(eval,"%d %s %d", &num, eval_name, &per);
+						if (ff == EOF)
+							break;
+						printf("%s score\t", eval_name);
+						eval_cnt++;
+					}
+					fclose(eval);
+				}
+				tmp_sel = select[i];
+				i++;
+
+			} // 메뉴 출력 while문 끝
+			printf("\n");
+
+			// 데이터 출력
+			s_cnt = get_s_cnt(); // s_cnt에 학생수 저장
+			integ = fopen("integ.db", "r");
+			integ2 = fopen("integ2.db", "r");
+			fgets(ttmp, 100, integ); // 전에는 fseek을 사용했었는데 fgets로 바꿔서 해봄
+			fgets(ttmp2, 100, integ2); // 전에는 fseek을 사용했었는데 fgets로 바꿔서 해봄
+			for (j = 0; j < s_cnt; j++) // 학생 수만큼 데이터 출력
+			{
+				fscanf(integ, "%s %lf %lf %d %s", name, &id, &percen, &rank, grade);
+				for (i = 0; i < r; i++) // 결과 선택 배열에 따라서 데이터를 출력함
+				{
+					if (res_sel[i] == '1') // 이름 출력
+						printf("%s\t", name);
+					if (res_sel[i] == '2') //id 출력
+						printf("%.0lf\t", id);
+					if (res_sel[i] == '3') // 퍼센트 출력
+						printf("%.1lf\t", percen);
+					if (res_sel[i] == '4') // 순위 출력
+						printf("%d\t", rank);
+					if (res_sel[i] == '5') // 학점 출력
+						printf("%s\t", grade);
+					if (res_sel[i] == '6') // 평가항목별 전체 점수 출력
+					{
+						fscanf(integ2, "%lf",&id);
+						for (k = 0; k < eval_cnt; k++)
+						{
+							fscanf(integ2, "%lf", &score);
+							printf("%.1lf\t\t\t", score);
+						}
+							
+					}
+				}
+				printf("\n");
+			}
+
+			fclose(integ);
+			fclose(integ2);
+			eval_cnt = 0;
+			printf("\n\n--------------------------------------------------------------------------------------\n");
+
+		} // 정상 출력 종료
+
+	} // while문 끝
+}
+
+void prt_one_st() // 한명의 학생 정보만 출력
+{
+	IDlist *stlist = NULL;
+	FILE *integ;
+	FILE *eval, *integ2;
+	char name[30], grade[10];
+	char eval_name[30];
+	char ttmp[100];
+	double search_id,id,per,score[10];
+	int rank,ff,per2,num,eval_cnt = 0,j;
+	
+	create_tree(&stlist); // 학번 검색을 위해
+
+	while (1)
+	{
+		eval_cnt = 0;
+		printf("\nYou Select Print Only One Student\n");
+		printf("If You want to back to the menu Input -1\n");
+		printf("Input Student-ID : ");
+		scanf("%lf", &search_id);
+		getchar(); // 버퍼 제거
+		if (search_id == -1) // 사용자가 -1 입력시 전 메뉴로 돌아감
+			break;
+		if (search_tree(&stlist, search_id) == 1) // 학번이 존재하는경우
+		 // 이름 / 학번 / 토탈 퍼센트 / 학점 / 평가항목별 총점
+		{
+			printf("\n\n--------------------------------------------------------------------------------------\n");
+			printf("\nName\tStudent-ID\tPercentage\tRank\tGrade\t");
+
+			eval = fopen("evaluation.db", "r");
+			while (1)
+			{
+				ff = fscanf(eval, "%d %s %d", &num, eval_name, &per2);
+				if (ff == EOF)
+					break;
+				printf("%s score\t", eval_name);
+				eval_cnt++;
+			}
+			fclose(eval);
+			printf("\n");
+			// 메뉴 프린트 완성
+
+			// 데이터 출력 시작
+			integ = fopen("integ.db", "r");
+			fgets(ttmp, 100, integ);
+			while (1)
+			{
+				fscanf(integ, "%s %lf %lf %d %s", name, &id, &per, &rank, grade);
+				if (id == search_id)
+				{
+					printf("%s\t%.0lf\t%.1lf\t\t%d\t%s\t", name, id, per, rank, grade);
+					break;
+				}
+			}
+			fclose(integ);
+			// 이름, 학번, 퍼센트, 랭크, 학점 출력 완료
+
+			// 평가항목별 토탈점수 출력
+			integ2 = fopen("integ2.db", "r");
+			fgets(ttmp, 100, integ2);
+			while (1)
+			{
+				fscanf(integ2, "%lf", &id);
+				for (j = 0; j < eval_cnt; j++)
+					fscanf(integ2, "%lf", &score[j]);
+
+				if (search_id == id)
+				{
+					for (j = 0; j < eval_cnt; j++)
+						printf("%.1lf\t\t\t", score[j]);
+					printf("\n");
+					break;
+				}
+
+			}
+			fclose(integ2);
+			printf("--------------------------------------------------------------------------------------\n\n");
+		}
+		else
+			printf("\nDon't exist Student-ID ! \n");
+	} // while문 끝
+	
+}

@@ -1,0 +1,37 @@
+#include<iostream>
+#include<fstream>
+using namespace std;
+
+int main()
+{
+	
+	ifstream src("c:\\windows\\system.ini",ios::in | ios::binary);
+	ofstream dest("system.txt",ios::out | ios::binary);
+
+	// 파일 크기 알아내기
+	src.seekg(0, ios::end);
+	int len = src.tellg();
+
+	cout << "복사 시작..." << endl;
+	int byte = len / 10;
+	int per = 10;
+	int ch;
+	int cnt = 0;
+	src.seekg(0); // 파일 크기알아냈을때 파일 포인터가 맨 뒤로가있었으니까
+	              // 다시 맨앞으로 땡김
+	while ((ch = src.get()) != EOF)
+	{
+		dest.put((char)ch);
+		cnt++;
+		if (cnt >= byte)
+		{
+			cout << "." << byte << "B " << per << "%" << endl;
+			per += 10;
+			cnt = 0;
+		}
+	}
+	cout << len << "B 복사 완료" << endl;
+
+	src.close();
+	dest.close();
+}

@@ -1,0 +1,21 @@
+#include<iostream>
+using namespace std;
+
+int main()
+{
+	int cnt=0;
+	char ch;
+	cout<<"문자열을 입력하시오 >> ";
+	while(1)
+	{
+		cin.get(ch);
+		if(cin.eof())
+			break;
+		if(ch == '\n')
+			break;
+		cout.put(ch);
+		if(ch==' ')
+			cnt++;
+	}
+	cout<<"공백 갯수 : "<<cnt<<endl;
+}

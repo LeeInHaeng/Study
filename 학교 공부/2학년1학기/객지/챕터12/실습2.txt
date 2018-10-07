@@ -1,0 +1,23 @@
+#include<iostream>
+#include<fstream>
+#include<vector>
+#include<string>
+using namespace std;
+
+int main()
+{
+	ifstream fin("c:\\windows\\system.ini");
+	string line;
+	vector<string> vs;
+	int cnt = 0;
+	while (1)
+	{
+		getline(fin, line);
+		if (fin.eof())	break;
+		vs.push_back(line);
+		cnt++;
+	}
+	fin.close();
+	for (int i = 0; i < cnt; i++)
+		cout << i + 1 << " : " << vs[i] << endl;
+}

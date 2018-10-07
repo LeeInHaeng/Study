@@ -1,0 +1,46 @@
+#include<iostream> // 이 소스는 얕은 복사로 인해 에러가 발생하는 소스입니다.
+#include<cstring> // 책의 예제에 나와 있는 코드와 최대한 비슷한 형식으로 구현했습니다.
+using namespace std;
+
+class Book{  // 북 클래스 생성
+	char *title; // 제목을 저장할 공간
+	int price; // 가격을 저장할 공간
+public:
+	Book(char* title, int price);
+	~Book();
+	void set(char *title, int price);
+	void show()
+	{
+		cout << title <<' '<<price<<"원"<<endl;
+	}
+};
+
+Book::Book(char *title, int price) // 북 클래스의 생성자
+{
+	this->price = price; // 가격 설정
+	int len = strlen(title); // 책의 제목의 길이를 구함
+// 여기서 len+2를 하는 이유는 한 칸은 널값을 넣을 공간이고, 아래에서 strcpy시에 명품C++과
+// 명품자바와의 글자 길이가 1글자 차이 나기 때문에 strcpy를 위해 len+2를 한다.
+	this->title = new char[len+2]; // 동적 생성
+	strcpy(this->title,title); // 제목을 복사
+}
+Book::~Book() // 북 클래스의 소멸자
+{
+	if(title)
+		delete [] title; // 동적 생성한 것을 반환
+}
+void Book::set(char *title, int price) // 북 클래스의 set함수
+{
+	this->price = price; // 가격 설정
+	strcpy(this->title,title); // 제목을 strcpy를 이용해 복사
+}
+
+int main()
+{
+	Book cpp("명품C++",10000);
+	Book java = cpp; // 복사 생성자 호출
+	java.set("명품자바",12000);
+	cpp.show();
+	java.show();
+	return 0;
+}

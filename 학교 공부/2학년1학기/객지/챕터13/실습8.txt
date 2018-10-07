@@ -1,0 +1,36 @@
+#include<iostream>
+using namespace std;
+
+int *copy(int *src, int size)
+{
+	try
+	{
+		int *p = NULL;
+		if(size<0) throw "too small";
+		if(size>100) throw "too big";
+		p = new int[size];
+		if(p==NULL) throw "memory short";
+		if(src==NULL) 
+		{
+			throw "Null source";
+			delete []p;
+		}
+		for(int n=0; n<size; n++)
+			p[n] = src[n];
+		return p;
+	}
+	catch(char *s)
+	{
+		cout<<"오류 발생 : "<<s<<endl;
+		return NULL;
+	}
+}
+
+int main()
+{
+	int x[] = {1,2,3};
+	int *p = copy(x,3);
+	for(int i=0; i<3; i++) cout<<p[i]<<"  ";
+	cout<<endl;
+	delete []p;
+}

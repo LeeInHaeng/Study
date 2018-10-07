@@ -1,0 +1,110 @@
+#include<stdio.h>
+#include<string.h>
+#include<stdlib.h>
+
+void swap(void *, void *, int);
+
+int main()
+{
+	int sel=0, a=0, b=0, dummy1=0, dummy2=0, len = 0;
+	char c1 = 0, c2 = 0;
+	char arr1[80]={0}, arr2[80]={0};
+	char *s1=NULL, *s2=NULL;
+	double d1=0, d2=0;
+	void *vp1 = NULL, *vp2 = NULL;
+	//void * tmp=NULL;
+
+	printf("Select Following Choice\n\n");
+	printf("Integer Swap				: 1\n\n");
+	printf("Character Swap				: 2\n\n");
+	printf("Real Number Swap			: 3\n\n");
+	printf("String Swap				: 4\n\n");
+	printf("Exit					: 5\n\n\n");
+	while (sel != 5) {
+		printf("Enter the number you want : ");
+		scanf_s("%d", &sel);
+		printf("\n");
+		switch (sel) {
+		case 1:
+			printf("Enter two integers to swap : ");
+			scanf_s("%d%d", &a, &b);
+			vp1 = &a;
+			vp2 = &b;
+			//printf("%u %d %u %d",vp1,a,vp2,b);
+			/* memcpy Test!!
+			tmp = malloc(10);
+			memcpy(tmp,vp1,sizeof(int));
+			memcpy(vp1,vp2,sizeof(int));
+			memcpy(vp2,tmp,sizeof(int));
+			*/
+			swap(vp1, vp2, sizeof(int));
+			printf("\nSwapped integers are %d %d\n\n",a,b);
+			break;
+		case 2:
+			printf("Enter two characters to swap : ");
+			scanf(" %c",&c1);
+			scanf(" %c",&c2);
+			//printf("%c %c",c1,c2);
+			vp1 = &c1;
+			vp2 = &c2;
+			swap(vp1, vp2, sizeof(char));
+			printf("\nSwapped characters are %c %c\n\n",c1,c2);
+			break;
+		case 3:
+			printf("Enter two real numbers to swap : ");
+			scanf_s("%lf%lf",&d1,&d2);
+			vp1 = &d1;
+			vp2 = &d2;
+			//printf("%u %.1lf %u %.1lf",vp1,d1,vp2,d2);
+			swap(vp1, vp2, sizeof(double));
+			//정수 확인 후 정수면 출력 방법 바꿈
+			dummy1 = d1;
+			dummy2 = d2;
+			if(d1==dummy1 && d2!=dummy2)
+				printf("\nSwapped real numbers are %.0lf %.1lf\n\n",d1,d2);
+			else if(d1!=dummy1 && d2==dummy2)
+				printf("\nSwapped real numbers are %.1lf %.0lf\n\n",d1,d2);
+			else if(d1==dummy1 && d2==dummy2)
+				printf("\nSwapped real numbers are %.0lf %.0lf\n\n",d1,d2);
+			else 
+				printf("\nSwapped real numbers are %.1lf %.1lf\n\n",d1,d2);
+			break;
+		case 4:
+			printf("Enter two strings to swap : ");
+			scanf("%s%s", arr1, arr2);
+			s1 = (char *)malloc(strlen(arr1)+1);
+			s2 = (char *)malloc(strlen(arr2)+1);
+			strcpy_s(s1,strlen(arr1)+1,arr1);
+			strcpy_s(s2,strlen(arr2)+1,arr2);
+			//printf("%u %s %u %s",s1,s1,s2,s2);
+			if(strlen(s1)>strlen(s2))
+				len = strlen(s1);
+			else
+				len = strlen(s2);
+			swap(s1,s2,(len+1)*sizeof(char));
+			printf("\nSwapped strings are %s %s\n\n",s1,s2);
+			s1=NULL; // NULL로 초기화 안할 시 아래의 free에서 에러 발생
+			s2=NULL;
+			free(s1);
+			free(s2);
+			break;
+		case 5:
+			printf("Thank you for using!\n");
+			break;
+		default:
+			printf("You enter wrong choice!\n\n");
+			break;
+		}
+	}
+	return 0;
+}
+
+void swap(void *p1, void *p2, int data_size)
+{
+	void *temp=NULL;
+	temp = malloc(data_size);
+	memcpy(temp,p1,data_size);
+	memcpy(p1,p2,data_size);
+	memcpy(p2,temp,data_size);
+	free(temp);
+}

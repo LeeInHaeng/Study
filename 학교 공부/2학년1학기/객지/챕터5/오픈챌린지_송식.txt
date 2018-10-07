@@ -1,0 +1,143 @@
+// 2012152049 황송식 객체지향언어 과제1
+#include <string>
+#include <iostream>
+using namespace std;
+
+class Morse
+{
+	string alphabet[26];
+	string digit[10];
+	string slash, question, comma, period, plus, equal;
+public:
+	Morse();
+	void text2Morse(string text, string& morse); // text를 morse로 변환하는 함수
+	bool Morse2Text(string morse, string& text1, string& text2);  // morse를 text로 변환하고, 처음 입력한 문자열과의 비교를 통해 참,거짓값을 리턴
+};
+Morse::Morse() // 생성자에서 모스 부호 정의
+	{
+		alphabet[0] =".-", alphabet[1] = "-...", alphabet[2] = "-.-.", alphabet[3] = "-..", alphabet[4] = ".",
+		alphabet[5] = "..-.", alphabet[6] = "--.", alphabet[7] = "....", alphabet[8] = "..", alphabet[9] = ".---",
+		alphabet[10] = "-.-", alphabet[11] = ".-..", alphabet[12] = "--", alphabet[13] = "-.", alphabet[14] = "---",
+		alphabet[15] = ".--.", alphabet[16] = "--.-", alphabet[17] = ".-.", alphabet[18] = "...", alphabet[19] = "-",
+		alphabet[20] = "..-", alphabet[21] = "...-", alphabet[22] = ".--", alphabet[23] = "-..-", alphabet[24] = "-.--",
+		alphabet[25] = "--..";
+
+		digit[0]="-----", digit[1]=".----",digit[2]="..---",digit[3]="...--",digit[4]="....-",
+		digit[5]=".....", digit[6]="-....", digit[7]="--...", digit[8]="---..", digit[9]="----.";
+		slash = "-..-.", question = "..--..", comma = "--..--", period = ".-.-.-", plus = ".-.-.", equal = "-...-";
+	}
+void Morse::text2Morse(string text, string& morse)
+{
+	int aski;
+	for (unsigned int i = 0;i <text.length();i++)
+	{
+		aski = text.at(i); // text의 한 문자의 아스키코드값을 저장
+
+	// 아스키코드값을 비교하여, 해당 모스부호를 '참조에의한 호출'을 이용하여 main함수에 선언된 string morse에 누적하여 저장.
+		if (aski == 32) morse += " "; // 영문 한 단어를 구분하는 공백
+		else if (aski == 43) morse += this->plus;
+		else if (aski == 44) morse += this->comma;
+		else if (aski == 46) morse += this->period;
+		else if (aski == 47) morse += this->slash;
+		else if (aski == 61) morse += this->equal;
+		else if (aski == 63) morse += this->question;
+		else if (aski >= 48 && aski <= 57) morse += this->digit[aski - 48];
+		else if (aski >= 97 && aski <= 122) morse += this->alphabet[aski - 97];
+		else  morse += "＊"; // 정의되지않은 문자의 예외처리
+		morse += " "; // 모스 코드들을 하나의 빈칸으로 분리
+	}
+}
+bool Morse::Morse2Text(string morse, string& text1, string& text2)
+{
+	string tmp; // 전체 모스부호의 부분 문자열을 저장하는 변수
+
+	unsigned int index1 = 0, index2 = 0, spcnt = 0; // 전체 문자열을 부분 문자열로 추출하기위한 index변수와 spacebar의 갯수를 counting하는 변수
+
+	while (index1<morse.length()) // 인덱스가 문자열의 끝에 다다를때 까지 변환 작업 수행
+	{
+		int skip = 0; // 효율적인 탐색을 위한 변수
+		index2 = morse.find(" ", index1); // 모스부호가 구분되는 지점(공백)의 인덱스를 저장하고
+		tmp = morse.substr(index1, index2 - index1);// 그 인덱스를 이용하여 모스부호를 추출.
+
+		if (index1 == index2) // 인덱스 끼리 같다는것은, 해당위치의 문자가 공백이라는것.
+		{
+			spcnt++;  // 공백의 누적갯수를 증가시키고,  다음 문자의 시작점으로 인덱스를 이동하여 검색을 진행.
+			index1++;
+
+			if (spcnt % 2 == 0) { // 누적 공백이 3개(모스부호에서의 단어 사이의 공백 수)라면 영어 문자열에 띄어쓰기를 추가시켜준다.
+				text2 += " ";
+				spcnt = 0; // 다시 초기화
+			}
+		}
+		else // 추출한 문자열이 공백이 아니라면 모스부호의 해당 단어를 탐색
+		{
+			spcnt = 0; // 공백이 아니었기 때문에 카운트를 초기화.
+
+					   // 추출한 모스부호 tmp가 영문인지 숫자인지 특수문자인지를 확인하여 해당하는 문자로 변환하여 누적 저장.
+
+			if (!skip) // 알파벳, 숫자, 특수문자 순서로 탐색을 하되
+						   // 각 단계에서 해당문자를 탐색하는데 성공하면, 값을 변경하여 이후 탐색을 건너 뛰도록 함. (효율적)
+				for (int i = 0;i < 26;i++) //알파벳 탐색
+					if (!(this->alphabet[i].compare(tmp)))
+					{
+						text2 += (char)(i + 97);
+						skip = 1;
+						break;
+					}
+
+			if (!skip)
+				for (int i = 0;i < 10;i++) // 숫자 탐색
+					if (!(this->digit[i].compare(tmp)))
+					{
+						text2 += (char)(i + 48);
+						skip = 1;
+						break;
+					}
+
+			if (!skip) // 특수문자 탐색
+			{
+				if (tmp == this->plus) { text2 += "+"; skip = 1; }
+				if (tmp == this->period) { text2 += "."; skip = 1; }
+				if (tmp == this->slash) { text2 += "/"; skip = 1; }
+				if (tmp == this->comma) { text2 += ","; skip = 1; }
+				if (tmp == this->equal) { text2 += "="; skip = 1; }
+				if (tmp == this->question) { text2 += "?"; skip = 1; }
+			}
+
+				if (!skip) // 탐색결과 알파벳, 숫자, 특수부호도 아닌 예외문자라면, 예외문자 '＊'을 저장.
+					text2 += "＊";
+
+				index1 = index2 + 1; // 공백 다음 문자의 시작점으로 인덱스를 이동.
+
+			}
+		} // ~while 변환작업 종료
+
+		if (text1 == text2) // 변환이 잘 되었는지를 처음 입력한 텍스트와 비교하여 참 거짓 값을 리턴
+			return true;
+		else
+			return false;
+}
+
+int main()
+{
+	string text1, text2; // text1은 처음 입력 받은 텍스트를 저장하고, text2는 text1가 morse코드로 변환된 후, 다시 영문텍스트로 변환된 결과를 저장.
+	string morse; // 입력받은 text1 영문 문자열을 morse코드로 변환한 결과를 저장.
+	Morse m; // morse클래스 생성.
+
+	cout << "2012152049 황송식" << endl;
+	cout << "아래에 영문 텍스트를 입력하세요. 모스 부호로 바꿉니다." << endl << endl << "-> ";
+	getline(cin, text1, '\n');
+
+	m.text2Morse(text1, morse);
+	cout << endl << morse << endl << endl;		// 입력받은 영문 문자열을 m클래스의 모스변환 함수를 이용하여 morse에 저장, 출력
+
+	cout << "모스 부호를 다시 영문 텍스트로 바꿉니다.";
+	if (m.Morse2Text(morse, text1, text2)) // 재변환 성공 리턴값 1, 실패 리턴값 0
+		cout << endl << "정상적으로 변환되었습니다." << endl << endl << text1 << endl << endl;
+	else
+	{
+		cout << endl << "변환이 잘못되었습니다. (정의되지 않은 문자가 포함되어 있습니다!)" << endl << endl;
+		cout << "변환 전 : " << text1 << endl;
+		cout << "변환 후 : " << text2 << endl << endl;
+	}
+}

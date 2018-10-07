@@ -1,0 +1,179 @@
+#include <iostream>
+#include <string>
+#include <cstdlib>
+
+using namespace std;
+
+class Morse 
+{
+	string alphabet[26];
+	string digit[10];
+	string slash, question, comma, period, plus, equal;
+public:
+	string text; 
+	Morse(); 
+	void text2Morse(string text, string &morse); 
+	void morse2Text(string morse, string &text); 
+};
+
+Morse::Morse() 
+{
+	// 알파벳을 모스부호로 초기화
+
+	alphabet[0] = ".-", alphabet[1] = "-...", alphabet[2] = "-.-.", alphabet[3] = "-..",
+	alphabet[4] = ".", alphabet[5] = "..-.", alphabet[6] = "--.", alphabet[7] = "....",
+	alphabet[8] = "..", alphabet[9] = ".---", alphabet[10] = "-.-", alphabet[11] = ".-..",
+	alphabet[12] = "--", alphabet[13] = "-.", alphabet[14] = "---", alphabet[15] = ".--.",
+	alphabet[16] = "--.-", alphabet[17] = ".-.", alphabet[18] = "...", alphabet[19] = "-",
+	alphabet[20] = "..-", alphabet[21] = "...-", alphabet[22] = ".--", alphabet[23] = "-..-",
+	alphabet[24] = "-.--", alphabet[25] = "--..",
+
+	// 숫자를 모스 부호로 초기화
+	digit[0] = "-----", digit[1] = ".----", digit[2] = "..---", digit[3] = "...--", digit[4] = "....-", 
+	digit[5] = ".....", digit[6] = "-....", digit[7] = "--...", digit[8] = "----..", digit[9] = "----.",
+
+	// 특수 문자를 모스 부호로 초기화
+	slash = "-..-.", question = "..--..", comma = "--..--",
+	period = ".-.-.-", plus = ".-.-.", equal = "-...-";
+}
+
+void Morse::text2Morse(string text, string &morse)
+{
+	string flag;
+	int text_len = text.length();
+	int replace;
+
+	for (int i = 0; i < text_len; i++) // 입력받은 문자열의 길이만큼 반복
+	{
+		replace = text[i]; // 아스키값으로 구분을 위해 text를 replace에 저장
+
+		// replace를 각각 비교
+		if (replace == 32) flag += " ";
+		else if (replace >= 97 && replace <= 122) flag += alphabet[replace - 97]; // 알파벳 비교
+		else if (replace >= 48 && replace <= 57) flag += digit[replace - 48]; // 숫자 비교
+		// 특수 문자 비교
+		else if (replace == 47) flag += slash; 
+		else if (replace == 63) flag += question;
+		else if (replace == 44) flag += comma; 
+		else if (replace == 46) flag += period;
+		else if (replace == 43) flag += plus;
+		else if (replace == 61) flag += equal;
+		else
+		{
+			cout << "정의 되지 않은 모스 부호가 포함되어 있습니다."<<endl;
+			cout << "정의된 부분까지만 출력합니다"<<endl;
+			break;
+		}
+		flag += " ";
+	}
+	morse = flag;
+}
+
+void Morse::morse2Text(string morse, string &text)
+{
+	string flag;
+	string tmp;
+	int s_index = 0;
+	int e_index = 0;
+	int morse_len = morse.length();
+	int sp_cnt = 0;
+	
+	// 스타트 인덱스가 모스길이의 끝까지 갈때까지
+	while(s_index < morse_len) 
+	{
+		// 스타트인덱스부터 검사하면서 공백을 찾았다면
+		e_index = morse.find(' ',s_index); 
+
+		// 스타트인덱스부터 엔드인덱스-스타트인덱스 크기만큼 split
+		tmp = morse.substr(s_index,e_index-s_index); 
+		// 스타트 인덱스를 엔드인덱스 다음으로 증가
+		s_index = e_index+1;
+
+		// 알파벳 검사
+		for(int i=0; i<26; i++)
+		{
+			if(tmp==alphabet[i])
+			{
+				flag += (char)(i+97);
+				break;
+			}
+		}
+
+		// 숫자 검사
+		for(int i=0; i<10; i++)
+		{
+			if(tmp==digit[i])
+			{
+				flag += (char)(i+48);
+				break;
+			}
+		}
+
+		// 특수 문자 검사
+		if(tmp==slash)
+			flag += '/';
+		else if(tmp==question)
+			flag += '?';
+		else if(tmp==comma)
+			flag += ',';
+		else if(tmp==period)
+			flag += '.';
+		else if(tmp==plus)
+			flag += '+';
+		else if(tmp==equal)
+			flag += '=';
+
+		// 공백 검사(연속된 스페이스값 검사)
+		if(int(morse[e_index])==32) // 모스의 엔드인덱스 아스키값이 32(공백)라면
+		{
+			if(e_index == morse_len-1) // 엔드 인덱스가 끝까지왔다면
+				break; // 공백 검사를 하지 않고 while문을 빠져 나감
+			s_index = e_index;
+			while(int(morse[s_index]) == 32) // 공백이 안나올때까지 sp_cnt 증가
+			{
+				sp_cnt++; // 스페이스 카운트 증가
+				s_index++; // 스타트 인덱스 증가
+			}
+			if(sp_cnt>=3) // 사용자가 입력한 공백이 1칸 이상이라면
+			{
+				int cnt = ceil(double(sp_cnt/3.0)); // 소수점 올림
+				for(int i=0; i<cnt; i++)
+					flag += ' '; // cnt만큼 공백 추가
+			}
+			// 공백이 3 이상이 아니면, 즉
+			// 사용자가 공백을 1칸이상 입력하지 않았다면
+			sp_cnt = 0; // 스페이스 카운트를 다시 초기화
+		}
+	}
+	text = flag;
+}
+
+int main()
+{
+	Morse *enc1 = new Morse();
+	Morse *dec1 = new Morse();
+
+
+	string text;
+	string flag;
+	string data;
+
+	cout<<"모스 부호로 변환하고 싶은 문장을 입력하세요"<<endl;
+	cout<<"---> ";
+	getline(cin,text);
+	enc1->text2Morse(text,flag); // 텍스트를 모스부호로 변환
+
+	cout<<endl<<"변환된 모스 부호"<<endl;
+	cout<<"--> "<<flag<<endl<<endl<<endl; // 변환된 모스부호 출력
+
+	data = flag; // 변환된 모스부호를 다시 복호화 하기 위해 data에 넣음
+	dec1->morse2Text(data,flag); // 모스부호를 텍스트로 변환
+	cout<<"변환된 모스 부호를 다시 복호화"<<endl; // 텍스트 출력
+	cout<<"--> "<<flag<<endl<<endl<<endl;
+
+	// 암호화, 복호화가 제대로 작동 되는지 확인
+	if(text==flag)
+		cout<<"모스 부호 암호화 / 복호화 성공!"<<endl<<endl;
+	else
+		cout<<"모스 부호 암호화 / 복호화 실패!"<<endl<<endl;
+}

@@ -1,0 +1,232 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<time.h>
+
+typedef struct Double{
+	int data;
+	struct Double *lnext;
+	struct Double *rnext;
+} Double_List;
+
+void init(FILE **, Double_List **, Double_List **);
+void insert(Double_List **, Double_List **);
+void del(Double_List **, Double_List **);
+
+int main()
+{
+	FILE *f;
+	int num,i;
+	Double_List *list=NULL;
+	Double_List *dum=NULL;
+
+	printf("몇 개의 데이터를 생성 하시겠습니까 ? : ");
+	scanf("%d",&num);
+	
+	srand(time(NULL));
+	f = fopen("asdf.txt","w");
+	for(i=0; i<num; i++)
+		fprintf(f,"%d ",rand()%100);
+	fclose(f);
+
+	init(&f,&list,&dum);
+	insert(&list,&dum);
+	del(&list,&dum);
+
+	return 0;
+}
+
+void init(FILE **f, Double_List **head, Double_List **dummy)
+{
+	int ff;
+	int data;
+	int cnt=0;
+	Double_List *newNode;
+	Double_List *tmpNode;
+
+	*f = fopen("asdf.txt","r");
+
+	// 더미 생성
+	*dummy = (Double_List *)malloc(sizeof(Double_List));
+	(*dummy)->lnext = *dummy;
+	(*dummy)->rnext = *dummy;
+
+	*head = *dummy;
+
+	while(1)
+	{
+		ff = fscanf(*f,"%d",&data);
+		if(ff==EOF)
+			break;
+		newNode = (Double_List *)malloc(sizeof(Double_List));
+		newNode->data = data;
+		if(cnt==0) // 리스트가 처음 들어올때
+		{
+			newNode->lnext = *dummy;
+			newNode->rnext = *dummy;
+			(*dummy)->lnext = newNode;
+			(*dummy)->rnext = newNode;
+		}
+		else
+		{
+			(*dummy)->rnext->rnext = newNode;
+			newNode->lnext = (*dummy)->rnext;
+			newNode->rnext = *dummy;
+			(*dummy)->rnext = newNode;
+		}
+		cnt++;
+	}
+	printf("\n현재 연결된 리스트의 상태\n");
+	tmpNode = (*dummy)->lnext;
+	while(1)
+	{
+		printf("%d ",tmpNode->data);
+		tmpNode = tmpNode->rnext;
+		if(tmpNode==*dummy)
+			break;
+	}
+}
+
+void insert(Double_List **head, Double_List **dummy)
+{
+	Double_List *tmpNode;
+	Double_List *newNode;
+	int target, data;
+
+	*head = *dummy;
+
+	tmpNode = (*dummy)->lnext;
+	printf("\n\n현재 연결된 리스트의 상태\n");
+	while(1)
+	{
+		printf("%d ",tmpNode->data);
+		tmpNode = tmpNode->rnext;
+		if(tmpNode==*dummy)
+			break;
+	}
+
+	printf("\n\n어디에 무슨 데이터를 넣으시겠습니까 ? : ");
+	scanf("%d%d",&target,&data);
+
+	tmpNode = (*dummy)->lnext;
+
+	newNode = (Double_List *)malloc(sizeof(Double_List));
+	newNode->data = data;
+	newNode->rnext = newNode;
+	newNode->lnext = newNode;
+
+	if(target==-1) // 제일 처음 삽입
+	{
+		newNode->rnext = (*dummy)->lnext;
+		(*dummy)->lnext->lnext = newNode;
+		(*dummy)->lnext = newNode;
+		newNode->lnext = *dummy;
+	}
+	else if(target == (*dummy)->rnext->data) // 제일 끝에 삽입
+	{
+		printf("\nFind Target!\n");
+		newNode->lnext = (*dummy)->rnext;
+		(*dummy)->rnext->rnext = newNode;
+		newNode->rnext = *dummy;
+		(*dummy)->rnext = newNode;
+	}
+	else
+	{
+		while(1)
+		{
+			if(tmpNode->data == target) // 중간 삽입
+			{
+				printf("\nFind Target!\n");
+				newNode->rnext = tmpNode->rnext;
+				tmpNode->rnext->lnext = newNode;
+				tmpNode->rnext = newNode;
+				newNode->lnext = tmpNode;
+				break;
+			}
+			tmpNode = tmpNode->rnext;
+			if(tmpNode==*dummy)
+			{
+				printf("\nNot Find Target!\n");
+				break;
+			}
+		}
+	}
+
+	printf("\nInsert후 리스트 상태\n");
+	tmpNode = (*dummy)->lnext;
+	while(1)
+	{
+		printf("%d ",tmpNode->data);
+		tmpNode = tmpNode->rnext;
+		if(tmpNode==*dummy)
+			break;
+	}
+}
+
+void del(Double_List **head, Double_List **dummy)
+{
+	Double_List *tmpNode;
+	int target;
+	int cnt=0;
+
+	tmpNode = (*dummy)->lnext;
+	printf("\n\n현재 연결된 리스트의 상태\n");
+	while(1)
+	{
+		printf("%d ",tmpNode->data);
+		tmpNode = tmpNode->rnext;
+		if(tmpNode==*dummy)
+			break;
+	}
+
+	printf("\n어떤 데이터를 삭제 하시겠습니까 ? : ");
+	scanf("%d",&target);
+	
+	// 더미 바로 왼쪽 삭제
+	if(target == (*dummy)->lnext->data)
+	{
+		printf("\nFind Target!\n");
+		tmpNode = (*dummy)->lnext;
+		tmpNode->rnext->lnext = *dummy;
+		(*dummy)->lnext = tmpNode->rnext;
+		free(tmpNode);
+	}
+	// 더미 바로 오른쪽 삭제
+	else if(target == (*dummy)->rnext->data)
+	{
+		printf("\nFind Target!\n");
+		tmpNode = (*dummy)->rnext;
+		tmpNode->lnext->rnext = *dummy;
+		(*dummy)->rnext = tmpNode->lnext;
+		free(tmpNode);
+	}
+	else // 중간값 삭제
+	{
+		tmpNode = (*dummy)->lnext;
+		while(1)
+		{
+			if(target == tmpNode->rnext->data)
+			{
+				printf("\nFind Target!\n");
+				tmpNode->rnext->rnext->lnext = tmpNode;
+				tmpNode->rnext = tmpNode->rnext->rnext;
+				break;
+			}
+			tmpNode = tmpNode->rnext;
+			if(tmpNode==*dummy)
+			{
+				printf("\nNot Find Target!\n");
+				break;
+			}
+		}
+	}
+
+	printf("\nDelete후 리스트 상태\n");
+	tmpNode = (*dummy)->lnext;
+	while(1)
+	{
+		printf("%d ",tmpNode->data);
+		tmpNode = tmpNode->rnext;
+		if(tmpNode==*dummy)
+			break;
+	}
+}

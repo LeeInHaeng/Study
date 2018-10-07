@@ -1,0 +1,29 @@
+#include<iostream>
+#include<fstream>
+using namespace std;
+
+int getFileSize(char *file)
+{
+	if(file==NULL) return -1;
+	ifstream fin(file);
+	if(!fin) return -2;
+	fin.seekg(0,ios::end);
+	int len = fin.tellg();
+	return len;
+}
+
+int main()
+{
+	try
+	{
+		int n = getFileSize("c:\\windows\\system.ini");
+		cout<<"파일 크기 : "<<n<<endl;
+		int m = getFileSize(NULL);
+		if(m == -1) throw "파일명이 NULL 입니다.";
+		cout<<"파일크기 : "<<m<<endl;
+	}
+	catch(char *s)
+	{
+		cout<<"예외 발생 : "<<s<<endl;
+	}
+}

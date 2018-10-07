@@ -1,0 +1,25 @@
+#include<iostream>
+#include<string>
+using namespace std;
+
+istream& prompt(istream& ins)
+{
+	cout << "암호 ? ";
+	return ins;
+}
+
+int main()
+{
+	string password;
+	while (1)
+	{
+		cin >> prompt >> password;
+		if (password == "C++")
+		{
+			cout << "로그인 성공!!" << endl;
+			break;
+		}
+		else
+			cout << "로그인 실패!" << endl;
+	}
+}

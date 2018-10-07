@@ -1,0 +1,595 @@
+/*
+이 프로그램은 단순 및 이중 연결리스트의 생성, 삽입, 삭제 뿐만 아니라
+연결리스트의 기본 연산을 통하여 스택, 큐, 트리를 연산하는 함수를 포함시키고 있음.
+*/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <time.h>
+
+#define entry -1				// 리스트의 첫번째 위치를 가리키기 위한 상수
+
+typedef struct singly {
+	int data;
+	struct singly *next;
+}int_singleNode;				// 단순 연결리스트를 위한 자기참조 구조체 : 데이터는 정수임
+
+typedef struct doubly {
+	int data;
+	struct doubly *llink;
+	struct doubly *rlink;
+}int_doubleNode;				// 이중 연결리스트를 위한 자기참조 구조체 : 데이터는 정수임
+
+
+void menu(void);				// 사용자 선택을 보여주는 함수
+int viewList(int_singleNode *);		// 리스트 내용을 확인하는 함수
+int create_Integer_Input(char *, FILE **);			// 정수 입력 데이터 파일 생성 함수
+int writeFile(char *, int_singleNode *);			// 리스트에 있는 데이터를 파일에 작성하는 함수
+int create_Singly_Linked_List_Int(int_singleNode **, char *);	// 정수를 연결리스트로 만들어 주는 함수
+int findLastNode(int_singleNode *, int_singleNode **, int_singleNode **); // 리스트의 마지막 노드를 가리키는 포이터를 리턴해 주는 함수
+int push(int_singleNode **, char *);		// 리스트 마지막에 데이터 입력하여 데이터 파일을 새롭게 해주는 함수
+int pop(int_singleNode **, char *);	// 리스트 마지막에 데이터를 삭제하고 리턴해 주는 함수
+int enqueue(int_singleNode **, char *);	// 리스트의 마지막에 데이터를 입력하는 함수로 기능은 push와 같으나 큐에서 사용되어 enqueue로 명명함.
+int dequeue(int_singleNode **, char *);// 리스트의 처음 데이터를 삭제하고 그 포인터를 리턴해 주는 함수
+int insert(int_singleNode **, char *);	// 리스트에 데이터를 삽입하는 함수로 리스트 중간에 삽입할 때 사용.
+int findElement(int_singleNode *, int_singleNode **, int_singleNode **, int);	// 리스트에서 삽입할 위치를 찾는 함수
+int deleteElement(int_singleNode **, char *);	// 리스트에서 원하는 데이터를 삭제하는 함수
+
+// int create_double_Linked_List();
+// int view_Data();
+// void main_Menu();
+
+int main(void) {
+
+	FILE * intFilePtr;				// 데이터 파일 포이터
+	int_singleNode *singlePtr = NULL;			// 파일에서 데이터를 읽어 들여 만든 단순 연결리스트 헤더 포인터
+	int_singleNode *testPtr = NULL;			// 디버그를 위해 만든 단순 연결리스트 포인터
+	int_singleNode *getData = NULL;			// 리턴되는 포인터의 값
+	char intFilename[20];				// 데이터 파일 이름.
+
+	
+	create_Integer_Input(intFilename, &intFilePtr);	// 정수를 랜덤으로 만들어 데이터 파일 생성
+	printf("파일이 생성되었습니다\n\n");
+				
+	
+	create_Singly_Linked_List_Int(&singlePtr, intFilename);	// 생성된 데이터 파일의 데이터를 이용하여 단순연결리스트 생성
+				
+	insert(&singlePtr,intFilename);
+	deleteElement(&singlePtr, intFilename);
+	
+	push(&singlePtr, intFilename);				// 데이터를 리스트 마지막에 입력
+					
+	
+	pop(&singlePtr, intFilename);				// 리스트 마지막 노드를 삭제하고 그 포인터를 리턴받는 함수
+	/*
+	if (getData != NULL)
+		printf("\npop data is %d\n", getData->data);
+	else
+		printf("스택이 비었습니다!\n");
+	*/
+	
+	
+	enqueue(&singlePtr, intFilename);				// 큐에 데이터를 삽입하는 함수
+	
+	dequeue(&singlePtr, intFilename);		// 큐에서 데이터를 삭제하고 그 값을 리턴하는 함수
+	/*
+	
+	if (getData != NULL)
+		printf("Dequeue data is %d\n", getData->data);
+	else
+		printf("큐가 비었습니다!\n");
+
+	viewList(singlePtr);
+	*/
+	return 0;
+}
+
+int create_Integer_Input (char *fileName, FILE ** intPtr) {
+// 랜덤으로 데이터를 만들어 데이터 파일을 생성하는 함수
+// fileName은 데이터 파일 이름으로 여러 함수에서 사용하여 메인에서 선언한뒤 parameter로 전달
+// intPtr은 메인에서 선언한 파일 포인터
+
+	int i, n;
+
+	printf("정수 데이터를 저장할 파일 이름을 입력하시오 ->\n");
+	scanf("%s", fileName);
+
+	if ((*intPtr = fopen(fileName, "w")) == NULL) {
+		printf("Cannot open file.\n");
+		exit(1);
+	}
+
+
+	printf("몇개의 숫자를 만들고 싶습니까?\n\n");
+	printf("데이터 입력을 원하지 않을 경우 데이터의 개수를 0으로 입력\n");
+	printf("->\n");
+	scanf("%d", &n);
+
+
+	srand(time(NULL));
+
+	// 이부분에 파일에 랜덤 데이터를 저장하는 명령어를 넣어야 함.
+	for (i = 0; i < n; i++)
+		fprintf(*intPtr,"%d ",rand()%100);
+	fclose(*intPtr);
+}
+
+
+int create_Singly_Linked_List_Int(int_singleNode **singlePtr, char *FileName) {
+// 생성된 랜덤 데이터 파일을 읽어 리스트로 연결시키는 함수
+// singlePtr은 리스트의 헤더 포인터의 포인터값
+// FileName은 데이터 파일 이름
+
+	FILE *inputPtr;
+	int_singleNode *newNode;		// 리스트에 연결될 새로운 노드의 포인터
+	int_singleNode *tempPtr;		// 리스트 헤더 포인터 값이 수정되는 것을 방지하기 위해 값을 복사하여 대신 사용되는 포인터 변수
+	int data;			// 파일에 있는 데이터를 읽을때 사용되는 변수
+
+	tempPtr = *singlePtr;
+
+	if ((inputPtr = fopen(FileName, "r")) == NULL) {
+		printf("Cannot open file.\n");
+		exit(1);
+	}
+
+	// EOF에 도달 할때 까지 반복
+	while (fscanf(inputPtr,"%d",&data) == 1) {
+
+		/*
+		새로운 노드 생성
+
+		새로운 노드에 데이터 삽입
+		새로운 노드의 링크 부분을 널로 만듬
+		*/
+		newNode = (int_singleNode *)malloc(sizeof(int_singleNode));
+		newNode->data = data;
+		newNode->next = NULL;
+
+		if (/*리스트가 비었을 때, 즉 널일때*/ tempPtr == NULL) {	// 리스트가 비었을때 헤더에 새로운 노드를 연결함
+			/*
+			헤더에 새로운 노드를 연결시키고
+			마지막 노드에 tempPtr이 가리키도록 함
+			*/
+			// singlePtr이 헤더?
+			*singlePtr = newNode; //헤더에 새로운 노드를 연결시키고
+			tempPtr = newNode; //마지막 노드에 tempPtr이 가리키도록 함
+			// tempPtr이 맨 마지막임
+		
+		}
+		else {							// 리스트에 노드가 존재할때 마지막에 데이터 연결
+			tempPtr->next = newNode; //마지막 노드 다음에 새 노드를 연결
+			tempPtr = newNode;//tempPtr이 마지막 노드 즉 새노드를 가리키도록 함
+		}
+	}
+	fclose(inputPtr);
+
+	return 0;
+
+}
+
+// insert 함수
+int insert(int_singleNode **singleListPtr, char *inputFileName) {
+
+	FILE *inputFilePtr = NULL;
+	int_singleNode *tempPtr = NULL;
+	int_singleNode *newNode = NULL;
+	int target;
+	int data;
+	int i=0;
+
+	tempPtr = *singleListPtr;
+
+	if (tempPtr == NULL) {
+		printf("리스트가 비었습니다!\n");
+	} // end of if
+	else {
+		printf("리스트 : ");
+		while (tempPtr != NULL) {
+			printf("%d ", tempPtr->data);
+			tempPtr = tempPtr->next;
+		}
+	} //end of else
+
+	printf("\n어디 다음에 무엇을 삽입할지 입력하시오\n");
+	printf("처음에 삽입을 원하시면 -1을 입력하시고 데이터를  입력하시오!\n");
+	scanf("%d%d", &target, &data);
+
+	/*
+	새 노드 생성
+	새 노드에 데이터 입력
+	새 노드 링크를 널로 만듬
+	*/
+	newNode = (int_singleNode*)malloc(sizeof(int_singleNode));
+	newNode->data = data;
+	newNode->next = NULL;
+
+	tempPtr = *singleListPtr;
+
+	if (target == entry)
+	{
+		if (tempPtr == NULL) // head가 없다면?
+			*singleListPtr = newNode;
+		else {
+			newNode->next = *singleListPtr;
+			*singleListPtr = newNode;
+		} // end of else
+	}
+
+	else {
+		/*
+		어디에 삽입을 원하는지 리스트의 원소 위치 확인
+		새로운 노드가 위치가 확인된 노드(타겟노드)가 가르키는 곳을 가리키도록 함
+		타겟노드의 링크가 새 노드를 가리키게 함
+		*/
+		tempPtr = *singleListPtr; // tempPtr을 헤드로 옮김
+		while(tempPtr != NULL)
+		{
+			if(tempPtr->data == target) // target을 찾았다면
+			{
+				printf("Find Target!! \n");
+				break;
+			}
+			else
+			{
+				if(tempPtr->next==NULL) // target을 찾지 못했다면
+				{
+					printf("Not find Target! \n");
+					i = 1; // 제어를 위해 조작
+					break;
+				}
+				tempPtr = tempPtr->next; // tempPtr을 다음으로 옮김
+			}
+		}
+		// 삽입
+		if(i != 1) // i가 1이 아니라면, 즉 데이터를 찾았다면
+		{
+			newNode->next = tempPtr->next;
+			tempPtr->next = newNode;
+		}
+
+	} // end of else
+
+	tempPtr = *singleListPtr; // tempPtr을 다시 헤드로 옮김
+
+	// 데이터 출력
+	while(tempPtr!=NULL)
+	{
+		printf("%d ",tempPtr->data);
+		tempPtr = tempPtr->next;
+	}
+	return 0;
+}
+	/* writeFile(inputFileName, *singleListPtr); */		// 새로운 리스트를 파일에 작성하는 함수 호출
+
+// delete 함수
+int deleteElement(int_singleNode **singleListPtr, char *inputFileName) 
+{
+	FILE *inputFilePtr = NULL;
+	int_singleNode *tempPtr = NULL;
+	int_singleNode *priorPtr = NULL;
+	int target;
+	int cnt=0;
+	int i = 0;
+
+	printf("\n\n");
+
+	tempPtr = *singleListPtr;
+
+	if (tempPtr == NULL) {
+		printf("리스트가 비었습니다!\n");
+	} // end of if
+	else {
+		printf("리스트 : ");
+		while (tempPtr != NULL) {
+			printf("%d ", tempPtr->data);
+			tempPtr = tempPtr->next;
+		}
+	} //end of else
+
+	printf("어떤 데이터를 삭제할지 입력하세요\n");
+	scanf("%d",&target);
+
+	tempPtr = *singleListPtr;
+	priorPtr = *singleListPtr;
+
+	// 타겟 검색
+	while(tempPtr != NULL)
+	{
+		if(tempPtr->data == target) // target을 찾았다면
+		{
+			printf("Find Target!! \n");
+			cnt++; // 찾은 타겟이 제일 앞인지 검사하기 위해 카운트
+			break;
+		}
+		else
+		{
+			if(tempPtr->next==NULL) // target을 찾지 못했다면
+			{
+				printf("Not find Target! \n");
+				i = 1; // 제어를 위해 조작
+				break;
+			}
+		priorPtr = tempPtr; // tempPtr을 다음으로 옮기기전에 저장
+		tempPtr = tempPtr->next; // tempPtr을 다음으로 옮김
+		cnt++; // 찾은 타겟이 제일 앞인지 검사하기 위해 카운트
+		}
+	}
+
+	if(i != 1) // 타겟을 찾았다면
+	{
+		if(cnt==1) // 삭제를 원하는 타겟이 헤드라면
+			*singleListPtr = tempPtr->next; // 헤드를 옮김
+		else
+			priorPtr->next = tempPtr->next; // tempPtr의 이전을 가리키던
+											// priorPtr을 tempPtr의 다음과 연결시킴
+		free(tempPtr);
+	}
+
+	tempPtr = *singleListPtr; // 출력을 위해 tempPtr을 다시 헤드로
+
+	// 출력
+	while(tempPtr!=NULL)
+	{
+		printf("%d ",tempPtr->data);
+		tempPtr = tempPtr->next;
+	}
+
+	return 0;
+}
+
+int push(int_singleNode **singleListPtr, char *inputFileName) // 리스트의 마지막에 데이터를 추가하는 것.
+{
+	FILE *inputFilePtr = NULL;
+	int_singleNode *tempPtr = NULL;
+	int_singleNode *newNode = NULL;
+	int data;
+
+	tempPtr = *singleListPtr;
+
+	if (tempPtr == NULL) {
+		printf("리스트가 비었습니다!\n");
+	} // end of if
+	else {
+		printf("\n\n리스트 : ");
+		while (tempPtr != NULL) {
+			printf("%d ", tempPtr->data);
+			tempPtr = tempPtr->next;
+		}
+	} //end of else
+
+	printf("\n\nPush를 진행합니다.\n");
+	printf("\n무슨값을 push 하시겠습니까?\n");
+	scanf("%d", &data); // push로 넣을 데이터값 입력 받음
+
+	/*
+	새 노드 생성
+	새 노드에 데이터 입력
+	새 노드 링크를 널로 만듬
+	*/
+	newNode = (int_singleNode*)malloc(sizeof(int_singleNode));
+	newNode->data = data;
+	newNode->next = NULL;
+
+	tempPtr = *singleListPtr; // tempPtr을 다시 헤더로
+
+	// Push 진행
+	if(tempPtr==NULL) // 리스트가 비어있다면
+	{
+		*singleListPtr = newNode; // 헤드가 newNode를 가리키게함
+		tempPtr = newNode;
+	}
+	else // 리스트가 비어있지 않다면
+	{
+		while(tempPtr->next != NULL) // tempPtr을 제일 끝으로 이동 시킴
+		{
+			tempPtr = tempPtr->next;
+		}
+	}
+
+	tempPtr->next = newNode; // 맨 마지막에 데이터를 연결 시킴
+	tempPtr = newNode;
+
+	tempPtr = *singleListPtr; // tempPtr을 다시 헤더로
+
+	// 출력
+	while(tempPtr!=NULL)
+	{
+		printf("%d ",tempPtr->data);
+		tempPtr = tempPtr->next;
+	}
+	return 0;
+}
+
+int pop(int_singleNode **singleListPtr, char *inputFileName) // 맨 마지막의 데이터를 빼오는것
+{
+	FILE *inputFilePtr = NULL;
+	int_singleNode *tempPtr = NULL;
+	int_singleNode *newNode = NULL;
+	int_singleNode *priorNode = NULL; // 이전 노드를 가리키기 위해 선언
+	int i=0; // 제어를 위해 사용
+
+	tempPtr = *singleListPtr;
+
+	if(tempPtr == NULL)
+		printf("리스트가 비었습니다.\n");
+	else
+	{
+		printf("\n\n리스트 : ");
+		while (tempPtr != NULL) {
+			printf("%d ", tempPtr->data);
+			tempPtr = tempPtr->next;
+		}
+	} //end of else
+
+	printf("\n\npop을 진행합니다.\n");
+
+	// pop 진행
+	tempPtr = *singleListPtr;
+
+	if(tempPtr == NULL) // 리스트 안에 값이 없다면
+	{
+		printf("pop을 진행할수 없습니다!!\n");
+	}
+	else
+	{
+		while(tempPtr->next != NULL) // tempPtr을 제일 끝으로 이동 시킴
+		{
+			priorNode = tempPtr; // priorNode는 tempPtr의 이전을 가리킴
+			tempPtr = tempPtr->next;
+		}
+		i = 1; // 제어를 위해 사용
+	}
+
+	if(i==1) // 리스트 안에 값이 있다면 pop 마저 진행
+	{
+		priorNode->next = tempPtr->next; // 맨끝 Ptr의 바로 이전노드가 null값을 갖게 하고
+		printf("pop이 이루어진 값 : [ %d ]\n",tempPtr->data);
+		free(tempPtr); // tempPtr을 반환한다.
+	}
+
+	// 출력
+	tempPtr = *singleListPtr;
+	while(tempPtr != NULL)
+	{
+		printf("%d ",tempPtr->data);
+		tempPtr = tempPtr->next;
+	}
+	return 0;
+}
+
+int enqueue(int_singleNode **singleListPtr, char *inputFileName) // 큐에서 사용하지만 push와 같이 마지막에
+																// 데이터를 넣는 기능
+{
+	FILE *inputFilePtr = NULL;
+	int_singleNode *tempPtr = NULL;
+	int_singleNode *newNode = NULL;
+	int data;
+	
+	tempPtr = *singleListPtr;
+
+	if(tempPtr == NULL)
+		printf("\n리스트가 비었습니다!\n");
+	else
+	{
+		printf("\n\n리스트 : ");
+		while (tempPtr != NULL)
+		{
+			printf("%d ", tempPtr->data);
+			tempPtr = tempPtr->next;
+		}
+	} // end of else
+
+	// enqueue 진행
+	printf("\n\nenqueue를 진행합니다. 어떤 데이터를 넣으시겠습니까?\n");
+	scanf("%d",&data); // enqueue할 데이터를 받음
+
+	// newNode생성
+	newNode = (int_singleNode *)malloc(sizeof(int_singleNode));
+	newNode->data = data;
+	newNode->next = NULL;
+
+	// enqueue 진행
+	tempPtr = *singleListPtr; // tempPtr을 헤더로
+
+	if(tempPtr==NULL) // 리스트가 비어있다면
+	{
+		*singleListPtr = newNode;
+		tempPtr = newNode;
+	}
+	else // 리스트 안에 데이터가 있다면
+	{
+		while(tempPtr->next != NULL)
+		{
+			tempPtr = tempPtr->next; // tempPtr을 제일 끝으로 이동시킴
+		}
+	}
+	// enqueue 진행
+	tempPtr->next = newNode;
+	tempPtr = newNode;
+
+	// 출력
+	tempPtr = *singleListPtr;
+	while(tempPtr != NULL)
+	{
+		printf("%d ",tempPtr->data);
+		tempPtr = tempPtr->next;
+	}
+	return 0;
+
+}
+
+int dequeue(int_singleNode **singleListPtr, char *inputFileName) // 큐에서 맨 앞의 값을 반환하는 함수
+{
+	FILE *inputFilePtr = NULL;
+	int_singleNode *tempPtr = NULL;
+	int i = 0; // 제어를 위해 사용
+	int sel = 0; // 선택을 위한 변수
+
+	tempPtr = *singleListPtr;
+
+	if(tempPtr==NULL)// 리스트가 비었다면
+	{
+		printf("\n\n리스트가 비었습니다!\n");
+		printf("dequeue를 진행할 수 없습니다!\n");
+	}
+	else
+	{
+		printf("\n\n리스트 : ");
+		while (tempPtr != NULL)
+		{
+			printf("%d ", tempPtr->data);
+			tempPtr = tempPtr->next;
+		}
+		i = 1;
+	} // end of else
+
+	if(i==1) // 리스트가 비어있지 않다면 dequeue진행
+	{
+		while(1) // dequeue를 계속 진행하기 위한 while문
+		{
+			tempPtr = *singleListPtr;
+			printf("\n\ndequeue를 진행하겠습니다.\n");
+			// dequeue는 헤더값을 반환하는 것이기 때문에 헤더를 계속 옮겨줘야 된다.
+			*singleListPtr = tempPtr->next;
+			printf("dequeue된 값 : [ %d ] \n",tempPtr->data); // dequeue된값 알려줌
+			free(tempPtr); // 맨 앞의값 반환
+			tempPtr = *singleListPtr; // tempPtr을 바뀐 헤더로 다시 옮겨줌
+
+			printf("\ndequeue를 계속 진행 하시겠습니까? 계속 : 1 , 멈춤 : 0\n");
+			scanf("%d",&sel);
+			if(sel==0) // 멈추겠다고 하면 while문을 빠져 나감
+				break;
+			else if(sel==1)
+			{
+				if(tempPtr==NULL) // dequeue를 더 진행하는데 리스트 안에 값이 없다면
+				{
+					printf("\n\n리스트 안에 값이 없으므로 dequeue를 중단합니다!\n");
+					exit(0);
+				}
+			}
+			else
+				printf("\n잘못 선택하셨습니다!!\n\n");
+
+		} // end of while
+
+	} // end of if i==1
+
+	// 출력
+	tempPtr = *singleListPtr;
+	printf("현재 리스트 : ");
+	while(tempPtr != NULL)
+	{
+		printf("%d ",tempPtr->data);
+		tempPtr = tempPtr->next;
+	}
+
+	printf("\n");
+	return 0;
+}
+
+/* insert, delete --> 단순 연결 리스트 , 
+push, pop --> 단순 연결 리스트 스택 , 
+enqueue, dequeue --> 단순 연결 리스트 큐
+*/

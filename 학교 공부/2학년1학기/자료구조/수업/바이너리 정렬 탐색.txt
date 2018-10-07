@@ -1,0 +1,72 @@
+#include<stdio.h>
+#include<time.h>
+#include<stdlib.h>
+#include<math.h>
+
+double logB(double x, double base) { // 밑이 2인 로그를 구하기 위한
+	return log(x)/log(base);			// 출처 네이버 지식in
+}
+
+int main()
+{
+	int data[1200];
+	int sel ,i,j, min,mid,tmp,a=0,num, cnt=0, left,right;
+	printf("몇개의 데이터를 생성 하시겠습니까 ? : ");
+	scanf("%d",&sel);
+	srand(time(NULL));
+	data[0] = rand() % 10;
+	for(i=1; i<sel; i++)
+		data[i] = data[i-1] + rand() % 10; // 중복 되지 않는 랜덤 숫자 제너레이트
+
+	// 정렬 시작 -- 선택 정렬
+	for(i=0; i<sel; i++)
+	{
+		a = i;
+		min = data[i];
+		// 최소값 찾기
+		for(j=i; j<sel; j++)
+		{
+			if(min>data[j])
+			{
+				min = data[j];
+				a = j;
+			}
+		}
+		// swap
+		tmp = data[i];
+		data[i] = data[a];
+		data[a] = tmp;
+	}
+	// 정렬 완료
+
+	for(i=0; i<sel; i++)
+		printf("%d ",data[i]);
+
+	printf("\n\n찾을 데이터를 입력하세요 : ");
+	scanf("%d",&num);
+
+	left = 0;
+	right = sel-1;
+	mid = (left+right)/2;
+
+	while(data[mid] != num)
+	{
+		mid = (left+right)/2;
+		cnt++;
+		if(num < data[mid])
+			right = mid;
+		else
+			left = mid;
+
+		// (log2sel)+1까지 나올 수 있음
+		if(cnt>logB((double)sel,2.0)+1)
+		{
+			printf("타겟을 찾을 수 없습니다!\n");
+			return 0;
+		}
+	}
+
+	printf("\n[ %d ]번 만에 타겟 발견 \n",cnt);
+
+	return 0;
+}

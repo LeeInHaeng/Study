@@ -1,0 +1,166 @@
+#include <iostream>
+#include <string>
+using namespace std;
+class Morse {
+	string alphabet[26];	// 모스 부호를 저장할 배열
+	string digit[10];// 숫자의 모스부호를 저장할 배열
+	string slash, question, comma, period, plus, equal; //각각 특수문자를 저장할 배열
+public:
+	string text; // 처음 바꿀 문자열을 받을 스트링 변수
+	Morse(); // 모스 클라스 생성시 각 배열에 모스부호를 초기화하는 생성자
+	void text2Morse(string text, string &morse); // 받은 문자열을 모스부호로 변환
+	bool morse2Text(string morse, string &text); // 변환된 모스부호를 다시 텍스트로 변환 후 같은지 검사
+
+};
+Morse::Morse() // 모스부호 배열에 초기화
+{
+	alphabet[0] = ".- ";
+	alphabet[1] = "-... ";
+	alphabet[2] = "-.-. ";
+	alphabet[3] = "-.. ";
+	alphabet[4] = ". ";
+	alphabet[5] = "..-. ";
+	alphabet[6] = "--. ";
+	alphabet[7] = ".... ";
+	alphabet[8] = ".. ";
+	alphabet[9] = ".--- ";
+	alphabet[10] = "-.- ";
+	alphabet[11] = ".-.. ";
+	alphabet[12] = "-- ";
+	alphabet[13] = "-. ";
+	alphabet[14] = "--- ";
+	alphabet[15] = ".--. ";
+	alphabet[16] = "--.- ";
+	alphabet[17] = ".-. ";
+	alphabet[18] = "... ";
+	alphabet[19] = "- ";
+	alphabet[20] = "..- ";
+	alphabet[21] = "...- ";
+	alphabet[22] = ".-- ";
+	alphabet[23] = "-..- ";
+	alphabet[24] = "-.-- ";
+	alphabet[25] = "--.. ";
+	digit[0] = "----- ";
+	digit[1] = ".---- ";
+	digit[2] = "..--- ";
+	digit[3] = "...-- ";
+	digit[4] = "....- ";
+	digit[5] = "..... ";
+	digit[6] = "-.... ";
+	digit[7] = "--... ";
+	digit[8] = "----.. ";
+	digit[9] = "----. ";
+	slash = "-..-. ";
+	question = "..--.. ";
+	comma = "--..-- ";
+	period = ".-.-.- ";
+	plus = ".-.-. ";
+	equal = "-...- ";
+}
+void Morse::text2Morse(string text, string& morse) // 입력받은 문자열을 모스부호로 변환
+{
+	int len = text.length(); // 입력받은 문자열의 길이를 구해 저장
+
+	for (int i = 0; i < len; i++) // 입력받은 문자열의 길이만큼 반복
+	{
+		if ((int)text.at(i) == 32) morse.append("  "); // 입력받은 문자열의 i 번째 문자를 at 함수로 받아서
+		else if ((int)text.at(i) == 47) morse.append(slash); // 그 값을 인트로 변환시키면 아스키코드값을 얻을수있다
+		else if ((int)text.at(i) == 63) morse.append(question);// 아스키코드값을 비교하여 각 문자들을 모스 변수에
+		else if ((int)text.at(i) == 44) morse.append(comma); // append 함수로 추가해준다.
+		else if ((int)text.at(i) == 46) morse.append(period);
+		else if ((int)text.at(i) == 43) morse.append(plus);
+		else if ((int)text.at(i) == 61) morse.append(equal);
+		else if ((int)text.at(i) >= 48 && (int)text.at(i) <= 57) morse.append(digit[(int)text.at(i) - 48]); // 숫자의 경우 아스키값이 48 부터 57 임으로 추가할때 -48을 해준다
+		else if ((int)text.at(i) >= 97 && (int)text.at(i) <= 122) morse.append(alphabet[(int)text.at(i) - 97]); // 영문자의 경우 아스키 코드값이 97 부터 122 이므로 추가할때 -97을 해준다.
+		else
+		{
+			cout << "없는 모스부호 입니다. 다시시작해주세요." << endl; // 지정되지 않은 값이나 문자가 들어오면 에러문자를 출력하고 프로그램을 종료한다.
+			exit(0);
+		}
+
+	}
+
+}
+bool Morse::morse2Text(string morse, string& text2) // 모스부호를 텍스트로 다시 변환하는 함수
+{
+	int idx = 0; // find 함수로 " " 값을 찾아 그 인덱스를 저장할 변수
+	int edx = 0; // 두번째 문자를 자를때 처음 자른후 idx 의 값을 넣어주어 두번째 문자의 시작인덱스를 값을 넣어줄 변수
+	string match;// 모스부호에서 변환된 문자열을 추가해줄 문자열.
+	while (1) {
+		idx = morse.find(" ", idx); // idx 에 모스부호의 띄어쓰기를 찾아 인덱스 값을 넣어준다
+		if (idx == -1) break; // idx 가 -1 이면  (찾는 문자가 없으면) 반복문을 종료
+		match = morse.substr(edx, (idx - edx) + 1); // edx 부터 " "를 찾은idx에서 edx를 뺀 값에서 +1 한곳까지 자른다.
+		for (int i = 0; i < 26; i++) // 문자를 탐색할 반복문
+		{
+			if (match == slash) {
+				text2 += "/";
+				break;
+			}
+			else if (match == question) {
+				text2 += "?";
+				break;
+			}
+			else if (match == comma) {
+				text2 += ",";
+				break;
+			}
+			else if (match == period) {
+				text2 += ".";
+				break;
+			}
+			else if (match == plus) {
+				text2 += "+";
+				break;
+			}
+			else if (match == equal) {
+				text2 += "=";
+				break;
+			}
+			else if (match.compare(alphabet[i]) == 0) {
+				text2 += ((char)(i + 97));
+				break;
+			}
+			else if (match.compare(" ") == 0) {
+				text2 += " ";
+				idx++;
+				break;
+			}
+
+		}
+
+		for (int i = 0; i < 10; i++) // 숫자를 탐색할 반복문
+		{
+			if (match == digit[i]) {
+				text2 += (char)(i + 48);
+
+				break;
+			}
+		}
+		idx++; // 모두 탐색한 뒤 인덱스를 1더하여 다음 문자 부터 검색
+		edx = idx; // edx 에 다음으로 자를 문자열의 시작 인덱스를 넣어줌
+
+	}
+	if (text2 == text) return true; // 함수가 bool 형 이므로 처음 입력받았던 문자열과 모스에서 바뀐 문자열이 같은지 검사하여 true 리턴
+	else false;
+}
+int main()
+{
+
+	string morse; // 변환된 모스부호를 저장할 문자배열
+	string text2; // 모스부호를 다시 문자열로 검사한후 저장할 배열
+
+	Morse ch; // 객체 선언
+
+	cout << "아래에 모스로부호로 바꿀 문자열을 입력해 주세요." << endl;
+	getline(cin, ch.text); // 문자열 입력받음
+
+	ch.text2Morse(ch.text, morse); // 객체의 text2Morse 함수에서 텍스트를 모스부호로 변환
+
+	cout << "입력하신 문장은 부호로 " << endl << morse; // 모스부호 출력
+
+	if (ch.morse2Text(morse, text2)) // 만약 모스부호를 다시 텍스트로 바꾸었을때
+		cout <<endl<< "다시 문자열로 변환 합니다. " << endl << text2 << endl; // 동일하면 텍스트 출력
+	else cout << "같지않습니다" << endl; // 처음과 다르면 에러 문자 출력
+
+
+}

@@ -1,0 +1,159 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<time.h>
+
+typedef struct single{
+	int data;
+	struct single *next;
+}Single_Node;
+
+void init(FILE **, Single_Node **); // 단일 리스트 시작 함수
+void pop(FILE **, Single_Node **); // pop 함수
+
+int main()
+{
+	FILE *f;
+	int num,i;
+	Single_Node *list=NULL;
+
+	printf("생성 하고 싶은 데이터 갯수 입력 : ");
+	scanf("%d",&num);
+
+	f = fopen("asdf.txt","w");
+
+	srand(time(NULL));
+
+	for(i=0; i<num; i++)
+		fprintf(f,"%d ",rand()%100);
+	fclose(f);
+
+	init(&f,&list);
+	pop(&f,&list);
+}
+
+void init(FILE **f, Single_Node **head)
+{
+	Single_Node *newNode;
+	Single_Node *tmpNode;
+	int ff;
+	int data;
+
+	*f = fopen("asdf.txt","r");
+
+	tmpNode = *head;
+
+	while(1)
+	{
+		ff = fscanf(*f,"%d",&data);
+		if(ff==EOF)
+			break;
+		newNode = (Single_Node *)malloc(sizeof(Single_Node));
+		newNode->data = data;
+		newNode->next = NULL;
+
+		if(*head==NULL) // 리스트가 비었다면
+		{
+			*head = newNode;
+			tmpNode = newNode;
+		}
+		else // 단일 리스트 연결
+		{
+			tmpNode->next = newNode;
+			tmpNode = newNode;
+		}
+
+	} // end of while loop
+	fclose(*f);
+}
+
+void pop(FILE **f, Single_Node **head)
+{
+	Single_Node *tmpNode;
+	Single_Node *priNode=NULL;
+	int sel;
+	int data;
+	int ff;
+
+	while(1)
+	{
+		// init으로 인해 현재 연결된 리스트 상태 출력
+		tmpNode = *head;
+
+		if(tmpNode->next==NULL)
+		{
+			printf("\n\n더이상 pop을 진행할 수 없습니다!\n");
+			break;
+		}
+		// 현재 연결된 단일 리스트 상태 출력
+		printf("\n\n현재 연결된 리스트 상태\n");
+		while(1)
+		{
+			printf("%d -> ",tmpNode->data);
+			tmpNode = tmpNode->next;
+			if(tmpNode==NULL)
+				break;
+		} // 현재 연결된 단일리스트 상태 출력 끝
+
+		// pop을 진행 할것인지 물어봄
+		printf("\n\npop을 진행 하시겠습니까 ? 1. yes , 2. no\n");
+		scanf("%d",&sel);
+		tmpNode = *head;
+
+		if(sel==1) // 사용자가 pop 하기를 원한다면
+		{
+			if(*head==NULL) // 헤드가 비어서 pop을 진행할 수 없다면
+			{
+				printf("\nPop을 진행 할 수 없습니다! 프로그램을 종료합니다.\n");
+				exit(0);
+			}
+			else // pop을 진행할 수 있다면
+			{
+				while(tmpNode->next!=NULL) // tmpNode를 끝으로 이동시킴
+				{
+					priNode = tmpNode; // tmpNode이동 전에 이전 노드를 가리킴
+					tmpNode = tmpNode->next; // tmpNode 이동
+				}
+				// pop 진행
+				printf("\npop이 이루어진 데이터 : [ %d ]",tmpNode->data);
+				free(tmpNode); // free를 진행하면 쓰레기 값이 들어감
+				tmpNode = priNode; // tmpNode를 이전 노드로 이동시키고
+				tmpNode->next = NULL; // tmpNode 다음을 null로 초기화 시켜버림
+
+			}
+
+			// pop 진행 후 파일 갱신
+			tmpNode = *head;
+			*f = fopen("asdf.txt","w"); // 파일 오픈
+			while(1)
+			{
+				fprintf(*f,"%d ",tmpNode->data); // 파일 갱신
+				tmpNode = tmpNode->next;
+				if(tmpNode==NULL)
+				{
+					fclose(*f);
+					break;
+				}
+			}
+		} // pop 진행 완료
+
+		else if(sel==2) // 여긴 fscanf를 활용해봤음
+		{
+			*f = fopen("asdf.txt","r");
+			printf("\npop을 종료합니다. 현재 연결된 리스트 상태\n");
+			while(1)
+			{
+				ff = fscanf(*f,"%d",&data);
+				if(ff==EOF)
+					break;
+				printf("%d -> ",data);
+			}
+			fclose(*f);
+			break;
+		}
+
+		else
+		{
+			printf("\n잘못 입력하셨습니다. 1 , 2번 중에서 입력해주세요\n");
+		}
+	}
+}

@@ -1,0 +1,102 @@
+#include<iostream>
+#include<string>
+using namespace std;
+
+class WordGame
+{
+public:
+	int mem;
+
+	WordGame() { 
+		cout<<"끝말 잇기 게임을 시작합니다"<<endl;
+	}
+	int Getmem()
+	{
+		cout<<"게임에 참가하는 인원은 몇명입니까 ? : ";
+		cin>>mem;
+		cin.get();
+		return mem;
+	}
+	string Start()
+	{
+		string start("아버지");
+		cout<<"시작하는 단어는 "<<start<<" 입니다."<<endl;
+		return start;
+	}
+};
+
+class Player
+{
+	string name;
+public:
+	void Setmem()
+	{
+		cout<<"참가자의 이름을 입력하세요. 빈칸 없이 >> ";
+		getline(cin,name,'\n');
+	}
+	void Prtmem()
+	{
+		cout<<name<<" >> ";
+	}
+	void Lose()
+	{
+		cout<<name<<" 이 졌습니다!"<<endl;
+	}
+};
+
+int main()
+{
+	WordGame game1;
+	game1.Getmem();
+	Player *pArr = new Player[game1.mem];
+
+	for(int i=0; i<game1.mem; i++)
+		pArr[i].Setmem();
+	
+	Player *p = pArr;
+	string a,b;
+
+	b = game1.Start();
+	int cnt=1;
+
+	while(true)
+	{
+		if(cnt>game1.mem)
+		{
+			cnt = 1;
+			p = pArr+0;
+		}
+		p->Prtmem();
+		getline(cin,a,'\n');
+		if(a[0]+a[1]==b[b.length()-2]+b[b.length()-1])
+		{
+			p++;
+			cnt++;
+		}
+		else
+		{
+			p->Lose();
+			return 0;
+		}
+
+		if(cnt>game1.mem)
+		{
+			cnt = 1;
+			p = pArr+0;
+		}
+
+		p->Prtmem();
+		getline(cin,b,'\n');
+		if(b[0]+b[1] == a[a.length()-2]+a[a.length()-1])
+		{
+			p++;
+			cnt++;
+		}
+		else
+		{
+			p->Lose();
+			return 0;
+		}
+	}
+	delete [] pArr;
+}

@@ -1,0 +1,47 @@
+#include <iostream>
+#include <fstream>
+using namespace std;
+
+int main() {
+// 소스파일과목적파일의이름
+	char* srcFile= "c:\\users\\public\\pictures\\sample pictures\\desert.jpg";
+	char* destFile= "c:\\copydesert.jpg";
+	// 소스파일열기
+	try
+	{
+		ifstream fsrc(srcFile, ios::in | ios::binary);
+		if(!fsrc)
+			throw srcFile;
+		/*
+		if(!fsrc) { // 열기실패검사
+			cout<< srcFile<< " 열기오류" << endl;
+		return 0;
+		*/
+
+		// 목적파일열기
+		ofstream fdest(destFile, ios::out | ios::binary);
+		if(!fdest)
+			throw destFile;
+
+		/*
+		if(!fdest) { // 열기실패검사
+			cout<< destFile<< " 열기오류" << endl;
+		return 0;
+		*/
+
+		// 소스파일에서목적파일로복사하기
+		int c;
+		while((c=fsrc.get()) != EOF) { // 소스파일을끝까지한바이트씩읽는다.
+			fdest.put(c); // 읽은바이트를파일에출력한다.
+		}
+		cout<< srcFile<< "을" << destFile<< "로복사완료" << endl;
+		fsrc.close();
+		fdest.close();
+	}
+	catch(char *s)
+	{
+		cout<<s<<" 열기 오류"<<endl;
+		return 0;
+	}
+	
+}

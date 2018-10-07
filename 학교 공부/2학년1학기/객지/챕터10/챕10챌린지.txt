@@ -1,0 +1,131 @@
+#include<iostream>
+#include<vector>
+#include<string>
+#include<ctime>
+using namespace std;
+
+class Word {
+	string word;
+	string answer;
+	int i;
+public:
+	void set_word(int i)
+	{
+		vector<string> vs;
+
+		vs.push_back("baby");
+		vs.push_back("human");
+		vs.push_back("society");
+		vs.push_back("picture");
+		vs.push_back("painting");
+		vs.push_back("love");
+		vs.push_back("emotion");
+		vs.push_back("dall");
+		vs.push_back("animal");
+		vs.push_back("bear"); // 10개
+		vs.push_back("honey");
+		vs.push_back("trade");
+		vs.push_back("pure");
+		vs.push_back("cherish");
+		vs.push_back("olivia");
+		vs.push_back("sophia");
+		vs.push_back("grace");
+		vs.push_back("victoria");
+		vs.push_back("spark");
+		vs.push_back("galaxy"); // 20개
+
+		word = vs[i];
+		this->i = i;
+	}
+	void show_exam(int res, int a, int b, int c)
+	{
+		vector<string> key;
+		key.push_back("자기");
+		key.push_back("인간");
+		key.push_back("사회");
+		key.push_back("사진");
+		key.push_back("그림");
+		key.push_back("사랑");
+		key.push_back("감정");
+		key.push_back("인형");
+		key.push_back("동물");
+		key.push_back("곰"); // 10개
+		key.push_back("애인");
+		key.push_back("거래");
+		key.push_back("순수한");
+		key.push_back("소중히하다");
+		key.push_back("평화");
+		key.push_back("지혜");
+		key.push_back("축복");
+		key.push_back("승리");
+		key.push_back("불꽃");
+		key.push_back("은하"); // 20개
+		answer = key[i];
+
+		cout << word << "?" << endl;
+		if (res == 1) // 정답이 1이라면
+			cout << "(1) " << answer << " (2) " << key[a] << " (3) " << key[b] << " (4) " << key[c];
+		else if (res == 2) // 정답이 2라면
+			cout << "(1) " << key[a] << " (2) " << answer << " (3) " << key[b] << " (4) " << key[c];
+		else if (res == 3) // 정답이 3이라면
+			cout << "(1) " << key[a] << " (2) " << key[b] << " (3) " << answer << " (4) " << key[c];
+		else // 정답이 4라면
+			cout << "(1) " << key[a] << " (2) " << key[b] << " (3) " << key[c] << " (4) " << answer;
+	}
+};
+
+int main()
+{
+	Word w1; 
+	vector<Word> v;
+	int word_cnt = 20; // 단어의 갯수
+	int a = -1, b = -1, c = -1;
+	int sel;
+	cout << "영어 어휘 테스트를 시작합니다. 1~4외 다른 입력시 종료합니다." << endl << endl;
+
+	// 단어의 갯수만큼 Word 객체를 백터에 삽입해 둔다.
+	for (int i = 0; i < word_cnt; i++)
+	{
+		v.push_back(w1);
+		v[i].set_word(i);
+	}
+	// 단어 셋팅 완료
+	
+	srand((unsigned)time(0)); // 난수 생성
+	while(1)
+	{
+
+		int n = rand() % word_cnt; // 랜덤번째 단어의 인덱스
+		int key = rand() % 4 + 1; // 4개의 보기중 답이 들어갈 숫자 (1~4)
+		while (1)
+		{
+			a = rand() % word_cnt; // 랜덤번째의 한글보기
+			if (a != n) // 중복 숫자 안나올때까지 while문
+				break;
+		}
+		while (1)
+		{
+			b = rand() % word_cnt; // 랜덤번째의 한글보기
+			if (b != n && b != a) // 중복 숫자 안나올때까지 while문
+				break;
+		}
+		while (1)
+		{
+			c = rand() % word_cnt; // 랜덤번째의 한글보기
+			if (c != n && c != a && c != b) // 중복 숫자 안나올때까지 while문
+				break;
+		}
+
+		v[n].show_exam(key,a,b,c); 
+		cout << " :> ";
+		cin >> sel;
+		cin.ignore(); // 버퍼제거
+		if (sel<1 || sel>4) // 1~4가 아니라면 프로그램 종료
+			break;
+		if (sel == key) // sel이 정답이라면
+			cout << "Excellent !!" << endl << endl;
+		else // 정답이 아니라면
+			cout << "No !!" << endl << endl;
+	}
+	
+}

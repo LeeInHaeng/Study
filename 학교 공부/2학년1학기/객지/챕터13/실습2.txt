@@ -1,0 +1,35 @@
+#include<iostream>
+using namespace std;
+
+int main()
+{
+	int score;
+	while(1)
+	{
+		cout<<"점수를 입력 >> ";
+		cin>>score;
+		try
+		{
+			if(score<0 || score>100)
+				throw score;
+			else
+			{
+				if(score<60)
+					cout<<"학점 F"<<endl;
+				else if(score < 70)
+					cout<<"학점 D"<<endl;
+				else if(score < 80)
+					cout<<"학점 C"<<endl;
+				else if(score<90)
+					cout<<"학점 B"<<endl;
+				else
+					cout<<"학점 A"<<endl;
+			}
+		}
+		catch(int x)
+		{
+			cout<<x<<" 입력 불가! 0에서 100사이로 입력"<<endl;
+			continue;
+		}
+	}
+}

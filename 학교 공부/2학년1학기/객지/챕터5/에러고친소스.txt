@@ -1,0 +1,53 @@
+#include<iostream> // 이 소스는 깊은 복사를 이용해 에러가 발생하는 소스를 해결한 소스 입니다
+#include<cstring>
+using namespace std;
+
+class Book{  // 북 클래스 생성
+	char *title;  // 제목을 저장할 공간
+	int price;  // 가격을 저장할 공간
+public:
+	Book(char* title, int price);
+	Book(Book &book); // 복사 생성자
+	~Book();
+	void set(char *title, int price);
+	void show()
+	{
+		cout << title <<' '<<price<<"원"<<endl;
+	}
+};
+
+Book::Book(char *title, int price) // 북 클래스의 생성자
+{
+	this->price = price; // 가격 설정
+	int len = strlen(title); // 책의 제목의 길이를 구함
+	this->title = new char[len+2]; // 동적 생성
+	strcpy(this->title,title); // 제목을 복사
+}
+Book::~Book() // 북 클래스의 소멸자
+{
+	if(title)
+		delete [] title; // 동적 생성한 것을 반환
+}
+void Book::set(char *title, int price) // 북 클래스의 set함수
+{
+	this->price = price; // 가격 설정
+	strcpy(this->title,title); // 제목을 strcpy를 이용해 복사
+}
+Book::Book(Book &book) // 사용자 정의 복사생성자 작성 (깊은 복사 생성자)
+{
+	this->price = book.price; // 가격 복사
+	int len = strlen(book.title); // 제목의 길이를 구하고
+	this->title = new char[len+2]; // 제목 문자열 공간 할당
+	strcpy(this->title,book.title); // 제목의 문자열 복사
+	cout<<"복사 생성자 실행"<<endl;
+}
+
+int main()
+{
+	Book cpp("명품C++",10000);
+	Book java = cpp; // 복사 생성자 호출
+	java.set("명품자바",12000);
+	cpp.show();
+	java.show();
+	return 0;
+}
