@@ -1,0 +1,7 @@
+First라는 프로젝트를 만들면
+CFirstApp TheApp라는 전역객체가 생성되고,
+이를 바탕으로 CObject생성자, CCmdTarget생성자,
+CWinThread생성자, CWinApp생성자가 실행되고
+CWinApp의 CFirstApp의 afxgetThread함수를 호출하고
+InitInstance가 실행된다. 그리고 CMainFrame, CFirstView하고, CFirstDoc클래스가 생성되고,
+Run함수를 통해 메세지 루핑을 시작한다.

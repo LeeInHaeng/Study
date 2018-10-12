@@ -1,0 +1,21 @@
+install.packages("KoNLP") #Korean Natural Language Processing
+install.packages("RColorBrewer")
+install.packages("wordcloud")
+
+library(KoNLP)
+library(RColorBrewer)
+library(wordcloud)
+
+f<-file("미국헌법전문.txt",encoding="UTF-8",blocking = F)
+txtLines<-readLines(f)
+nouns<-sapply(txtLines, extractNoun, USE.NAMES = F)
+write(unlist(nouns), "미국헌법전문.txt")
+revised<-read.table("미국헌법전문.txt")
+nrow(revised)
+wordcount<-table(revised)
+length(wordcount)
+head(sort(wordcount, decreasing = T),10)
+pal<-brewer.pal(9, "Set1")
+x11()
+wordcloud(names(wordcount),freq = wordcount, scale = c(5,1),rot.per = 0.25, min.freq=10,
+          random.order = F,random.color = T, colors = pal)
