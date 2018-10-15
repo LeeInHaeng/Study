@@ -1,0 +1,1272 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<time.h>
+#include<math.h>
+#include<windows.h> // c언어 time.h로는 정확한 시간 측정이 불가능 하여 다른 방법 사용
+
+#define REPEAT_CNT 10
+#define DATA_CNT 100000
+#define MIN_RANGE 1
+#define MAX_RANGE 1000000
+
+typedef struct treeData {
+	double num;
+	struct treeData *lnext;
+	struct treeData *rnext;
+	struct treeData *parent; // 부모도 알기 위해 더블 링크드 리스트 작성
+}treeData;
+
+void Create_Bst_Tree(treeData **); // BST를 생성하는 함수
+void Insert_Bst_Tree(treeData **, char*, int); // BST에서 1개의 노드를 삽입하는 함수
+void Delete_Bst_Tree(treeData **, char*, int); // BST에서 1개의 노드를 삭제하는 함수
+
+void Create_Avl_Tree(treeData **);
+void Insert_Avl_Tree(treeData **, char*, int); // AVL에서 1개의 노드를 삽입하는 함수
+void Delete_Avl_Tree(treeData **, char*, int); // AVL에서 1개의 노드를 삭제하는 함수
+
+void main()
+{
+	treeData *bstTree = NULL;
+	treeData *avlTree = NULL;
+
+	printf("--- Bst 시작 ---\n");
+	Create_Bst_Tree(&bstTree);
+	printf("--- Bst 종료 ---\n");
+	printf("--- Avl 시작 ---\n");
+	Create_Avl_Tree(&avlTree);
+	printf("--- Avl 종료 ---\n");
+}
+
+
+void Create_Bst_Tree(treeData **head)
+{
+	// 제어 변수
+	int i, j;
+
+	// 랜덤 제너레이트 변수
+	FILE *fp;
+	int ff;
+	int data;
+	char fileName[50] = { 0 };
+	char tmp[50] = { 0 };
+
+	// 트리를 위한 변수
+	treeData *newNode;
+	treeData *treeTmp;
+	treeData *treePre;
+
+	// 시간 측정 변수
+	clock_t start, end;
+
+	// BST에 사용할 데이터 랜덤 제너레이트
+	srand((unsigned)time(NULL));
+	for (i = 0; i < REPEAT_CNT; i++)
+	{
+		strcpy(fileName, "_createBst.txt");
+		itoa(i, tmp, 10);
+		strcpy(fileName, strcat(tmp, fileName));
+		fp = fopen(fileName, "w");
+
+		for (j = 0; j < DATA_CNT; j++)
+		{
+			data = rand() % MAX_RANGE + MIN_RANGE;
+			fprintf(fp, "%d\n", data);
+		}
+
+		fclose(fp);
+	}
+	printf("%d X %d 개의 데이터 랜덤 제너레이트 완료\n", REPEAT_CNT, DATA_CNT);
+
+	// BST 생성
+	for (i = 0; i < REPEAT_CNT; i++)
+	{
+		strcpy(fileName, "_createBst.txt");
+		itoa(i, tmp, 10);
+		strcpy(fileName, strcat(tmp, fileName));
+		fp = fopen(fileName, "r");
+
+		start = clock(); // 시간 측정 시작
+		while (1)
+		{
+			treeTmp = *head;
+			ff = fscanf(fp, "%d", &data);
+			if (ff == EOF)
+				break;
+			newNode = (treeData *)malloc(sizeof(treeData));
+			newNode->num = data;
+			newNode->lnext = NULL;
+			newNode->rnext = NULL;
+			newNode->parent = NULL;
+
+			// data를 BST로 연결시킴
+			if (*head == NULL)
+				*head = newNode;
+			else
+			{
+				// treeTmp 노드를 이동시킴
+				while (treeTmp != NULL)
+				{
+					treePre = treeTmp;
+					if (newNode->num < treeTmp->num)
+						treeTmp = treeTmp->lnext;
+					else
+						treeTmp = treeTmp->rnext;
+				}
+				// tmp 이동 끝
+
+				treeTmp = treePre; // tmp를 널 전으로 돌아오게 함
+				if (newNode->num < treeTmp->num) // newNode가 tmp의 값보다 작다면
+				{
+					treeTmp->lnext = newNode;
+					treeTmp->lnext->parent = treePre;
+				}
+				else
+				{
+					treeTmp->rnext = newNode;
+					treeTmp->rnext->parent = treePre;
+				}
+
+			}
+		}
+		fclose(fp);
+		end = clock(); // 시간 측정 종료
+
+					   // 트리 생성 시간을 각 파일의 마지막에 씀
+		fp = fopen(fileName, "a");
+		fprintf(fp, "BST 생성시간 : %.3lf 밀리초\n", (double)(end - start));
+		fclose(fp);
+
+		printf("%d 번째 트리 생성 완료\n", i);
+
+		Insert_Bst_Tree(head, fileName, i); // BST 트리에서 한개의 데이터 삽입
+		Delete_Bst_Tree(head, fileName, i); // BST 트리에서 한개의 데이터 삭제
+
+		*head = NULL;
+	}
+
+}
+
+void Insert_Bst_Tree(treeData **head, char *fileName, int treeCnt)
+{
+	FILE *fp;
+
+	// 삽입할 데이터, 랜덤으로 제너레이트
+	int insert_data;
+
+	// 시간 측정 변수 clock_t로는 정확한 시간 측정이 불가능 하여 출처의 방법을 사용
+	//clock_t start, end;
+	// 출처 : https://www.npteam.net/50
+	LARGE_INTEGER liCounter1, liCounter2, liFrequency;
+
+	// 트리를 위한 변수
+	treeData *newNode;
+	treeData *treeTmp;
+	treeData *treePre;
+
+	srand((unsigned)time(NULL));
+	insert_data = rand() % MAX_RANGE + MIN_RANGE;
+
+	//start = clock(); // 시간 측정 시작
+	QueryPerformanceFrequency(&liFrequency);
+	QueryPerformanceCounter(&liCounter1);
+
+	treeTmp = *head;
+
+	newNode = (treeData *)malloc(sizeof(treeData));
+	newNode->num = insert_data;
+	newNode->lnext = NULL;
+	newNode->rnext = NULL;
+	newNode->parent = NULL;
+
+	// treeTmp를 삽입할 위치까지 이동시킴
+	while (treeTmp != NULL)
+	{
+		treePre = treeTmp;
+		if (newNode->num < treeTmp->num)
+			treeTmp = treeTmp->lnext;
+		else
+			treeTmp = treeTmp->rnext;
+	}
+	// tmp 이동 끝
+
+	treeTmp = treePre; // tmp를 널 전으로 돌아오게 함
+	if (newNode->num < treeTmp->num) // newNode가 tmp의 값보다 작다면
+	{
+		treeTmp->lnext = newNode;
+		treeTmp->lnext->parent = treePre;
+	}
+	else
+	{
+		treeTmp->rnext = newNode;
+		treeTmp->rnext->parent = treePre;
+	}
+
+	//end = clock(); // 시간 측정 종료
+	QueryPerformanceCounter(&liCounter2);
+
+	fp = fopen(fileName, "a");
+	//fprintf(fp, "BST 1개의 데이터 삽입 시간 : %lf 밀리초\n", (double)(end - start) );
+	fprintf(fp, "BST 1개의 데이터 삽입 시간 : %f 초\n", (double)(liCounter2.QuadPart - liCounter1.QuadPart) / (double)liFrequency.QuadPart);
+	fclose(fp);
+
+	printf("%d번째 트리 삽입 완료\n", treeCnt);
+}
+
+void Delete_Bst_Tree(treeData **head, char *fileName, int treeCnt)
+{
+	FILE *fp;
+
+	// 삭제할 데이터
+	int delete_data;
+	int delete_pos; // 삭제할 데이터의 위치를 랜덤 제너레이트
+
+	// 시간 측정 변수
+	// 시간 측정 변수 clock_t로는 정확한 시간 측정이 불가능 하여 출처의 방법을 사용
+	//clock_t start, end;
+	// 출처 : https://www.npteam.net/50
+	LARGE_INTEGER liCounter1, liCounter2, liFrequency;
+
+	// 트리를 위한 변수
+	treeData *newNode;
+	treeData *treeTmp;
+	treeData *xNode;
+	treeData * deleteNode;
+
+	int i;
+
+	srand((unsigned)time(NULL));
+	delete_pos = rand() % DATA_CNT + 1;
+
+	// 삭제할 랜덤 데이터를 파일에서 찾음
+	fp = fopen(fileName, "r");
+	for (i = 0; i < delete_pos; i++)
+		fscanf(fp, "%d", &delete_data);
+	fclose(fp);
+
+	printf("삭제할 데이터 : %d\n", delete_data);
+
+	treeTmp = *head;
+
+	newNode = (treeData *)malloc(sizeof(treeData));
+	newNode->num = delete_data;
+	newNode->lnext = NULL;
+	newNode->rnext = NULL;
+	newNode->parent = NULL;
+
+	deleteNode = *head;
+
+	//start = clock(); // 시간 측정 시작
+	QueryPerformanceFrequency(&liFrequency);
+	QueryPerformanceCounter(&liCounter1);
+
+	// treeTmp 노드를 이동시킴 (삭제할 노드의 위치를 찾음)
+	while (treeTmp->num != newNode->num)
+	{
+		if (newNode->num < treeTmp->num)
+			treeTmp = treeTmp->lnext;
+		else
+			treeTmp = treeTmp->rnext;
+	}
+	// tmp 이동 끝
+
+	// 수업 시간에 했던 Delete의 수도코드를 보고 작성
+	// z가 treeTmp이고, y가 deleteNode이고, x가 xNode 이다.
+	if (treeTmp->lnext == NULL || treeTmp->rnext == NULL)
+		deleteNode = treeTmp;
+	else // 자식이 둘 다 살아있는 경우
+	{
+		// treeTmp의 오른쪽의 미니멈을 찾음
+		deleteNode = treeTmp->rnext;
+
+		while (deleteNode->lnext != NULL)
+			deleteNode = deleteNode->lnext;
+	}
+
+	if (deleteNode->lnext != NULL)
+		xNode = deleteNode->lnext;
+	else
+		xNode = deleteNode->rnext;
+
+	if (xNode != NULL)
+		xNode->parent = deleteNode->parent;
+
+	if (deleteNode->parent == NULL) // 삭제할 노드가 root인 경우
+		*head = xNode;
+	else
+	{
+		if (deleteNode == deleteNode->parent->lnext)
+			deleteNode->parent->lnext = xNode;
+		else
+			deleteNode->parent->rnext = xNode;
+	}
+
+	if (deleteNode != treeTmp)
+		treeTmp->num = deleteNode->num;
+
+	free(deleteNode);
+
+	//end = clock(); // 시간 측정 종료
+	QueryPerformanceCounter(&liCounter2);
+
+	fp = fopen(fileName, "a");
+	//fprintf(fp, "BST 1개의 데이터 삭제 시간 : %lf 밀리초\n", (double)(end - start));
+	fprintf(fp, "BST 1개의 데이터 삭제 시간 : %f 초\n", (double)(liCounter2.QuadPart - liCounter1.QuadPart) / (double)liFrequency.QuadPart);
+	fclose(fp);
+
+	printf("%d번째 트리 삭제 완료\n", treeCnt);
+}
+
+void Create_Avl_Tree(treeData **head)
+{
+	// 파일 관련 변수
+	FILE *fp;
+	int ff;
+	char fileName[50] = { 0 };
+	char tmp[50] = { 0 };
+
+	// 트리를 위한 변수
+	treeData *newNode; // 새로 추가되는 데이터 노드
+	treeData *treeTmp; // 계속해서 이동 시키는 노드
+	treeData *treePre;
+	treeData *balNode; // 밸런스 팩터의 노드
+	treeData *doubleNode; // 더블 로테이션을 관리하는 노드
+
+	// 제어 변수
+	int i, j;
+
+	// 데이터
+	int data;
+	int r_tmp1, r_tmp2;
+	int r_balance = 0;
+	int l_tmp1, l_tmp2;
+	int l_balance = 0;
+	int tmp_balance = 0; // double rotate 유무 확인
+	int start, end;
+
+	// AVL에 사용할 데이터 랜덤 제너레이트
+	srand((unsigned)time(NULL));
+	for (i = 0; i < REPEAT_CNT; i++)
+	{
+		strcpy(fileName, "_createAvl.txt");
+		itoa(i, tmp, 10);
+		strcpy(fileName, strcat(tmp, fileName));
+		fp = fopen(fileName, "w");
+
+		for (j = 0; j < DATA_CNT; j++)
+		{
+			data = rand() % MAX_RANGE + MIN_RANGE;
+			fprintf(fp, "%d\n", data);
+		}
+
+		fclose(fp);
+	}
+	printf("%d X %d 개의 데이터 랜덤 제너레이트 완료\n", REPEAT_CNT, DATA_CNT);
+
+	// AVL 생성
+	for (i = 0; i < REPEAT_CNT; i++)
+	{
+		strcpy(fileName, "_createAvl.txt");
+		itoa(i, tmp, 10);
+		strcpy(fileName, strcat(tmp, fileName));
+		fp = fopen(fileName, "r");
+		//fp = fopen("avl.txt", "r");
+
+		start = clock(); // 시간 측정 시작
+
+		while (1)
+		{
+			treeTmp = *head;
+			ff = fscanf(fp, "%d", &data);
+			if (ff == EOF)
+				break;
+
+			newNode = (treeData *)malloc(sizeof(treeData));
+			newNode->num = data;
+			newNode->lnext = NULL;
+			newNode->rnext = NULL;
+			newNode->parent = NULL;
+
+			// data를 AVL로 연결시킴
+			if (*head == NULL)
+				*head = newNode;
+			else
+			{
+				// treeTmp 노드를 이동시킴
+				while (treeTmp != NULL)
+				{
+					treePre = treeTmp;
+					if (newNode->num < treeTmp->num)
+						treeTmp = treeTmp->lnext;
+					else
+						treeTmp = treeTmp->rnext;
+				}
+				// tmp 이동 끝
+
+				treeTmp = treePre; // tmp를 널 전으로 돌아오게 함
+				if (newNode->num < treeTmp->num) // newNode가 tmp의 값보다 작다면
+				{
+					treeTmp->lnext = newNode;
+					treeTmp->lnext->parent = treePre;
+				}
+				else
+				{
+					treeTmp->rnext = newNode;
+					treeTmp->rnext->parent = treePre;
+				}
+
+				while (treeTmp != NULL) // treeTmp가 root일때까지 돌음
+				{
+					j = 0;
+					//밸런스 팩터를 계산
+					balNode = treeTmp;
+					r_balance = l_balance = 0;
+					r_tmp1 = r_tmp2 = 0;
+					l_tmp1 = l_tmp2 = 0;
+
+					treeTmp = balNode;
+
+					//printf("%d\n", data); // 무한루프 test
+					if (treeTmp->rnext != NULL)
+					{
+						treeTmp = treeTmp->rnext;
+						r_tmp1++;
+						r_tmp2++;
+						// tmp를 이동시키면서 right 밸런스팩터 계산
+						while (1)
+						{
+							if (treeTmp->rnext != NULL)
+							{
+								treeTmp = treeTmp->rnext;
+								r_tmp1++;
+							}
+							else if (treeTmp->lnext != NULL)
+							{
+								treeTmp = treeTmp->lnext;
+								r_tmp1++;
+							}
+							else
+								break;
+						}
+
+						treeTmp = balNode->rnext;
+						while (treeTmp != NULL)
+						{
+							if (treeTmp->num > newNode->num)
+							{
+								treeTmp = treeTmp->lnext;
+								r_tmp2++;
+							}
+							else
+							{
+								treeTmp = treeTmp->rnext;
+								r_tmp2++;
+							}
+						}
+						r_tmp2--; // 하나 더 갔으므로
+						if (r_tmp1 >= r_tmp2)
+							r_balance = r_tmp1;
+						else
+							r_balance = r_tmp2;
+					}
+
+					treeTmp = balNode;
+					// tmp를 이동시키면서 left 밸런스팩터 계산
+					if (treeTmp->lnext != NULL)
+					{
+						treeTmp = treeTmp->lnext;
+						l_tmp1++;
+						l_tmp2++;
+						while (1)
+						{
+							if (treeTmp->lnext != NULL)
+							{
+								treeTmp = treeTmp->lnext;
+								l_tmp1++;
+							}
+							else if (treeTmp->rnext != NULL)
+							{
+								treeTmp = treeTmp->rnext;
+								l_tmp1++;
+							}
+							else
+								break;
+						}
+
+						treeTmp = balNode->lnext;
+						while (treeTmp != NULL)
+						{
+							if (treeTmp->num > newNode->num)
+							{
+								treeTmp = treeTmp->lnext;
+								l_tmp2++;
+							}
+							else
+							{
+								treeTmp = treeTmp->rnext;
+								l_tmp2++;
+							}
+						}
+						l_tmp2--; // 하나 더 갔으므로
+						if (l_tmp1 >= l_tmp2)
+							l_balance = l_tmp1;
+						else
+							l_balance = l_tmp2;
+					}
+
+					// 밸런스가 깨졌을 경우
+
+					// +2 이상일 경우 left rotation
+					if (r_balance - l_balance >= 2)
+					{
+						if (tmp_balance < 0) // +와 -이기 때문에 double left rotate ( right 후 left )
+						{
+							doubleNode = balNode->rnext;
+							balNode->rnext = doubleNode->lnext;
+							doubleNode->lnext->parent = balNode;
+
+							doubleNode->parent = doubleNode->lnext;
+							doubleNode->lnext = doubleNode->lnext->rnext;
+							doubleNode->parent->rnext = doubleNode;
+							if(doubleNode->lnext != NULL)
+								doubleNode->lnext->parent = doubleNode;
+
+							j = 1;
+						}
+						else
+						{
+							if (balNode->parent == NULL) // 밸런스 깨진 노드가 root인 경우
+							{
+								balNode->rnext->parent = NULL;
+								*head = balNode->rnext;
+							}
+							else
+							{
+								if (balNode == balNode->parent->rnext) // 부모 노드 기준으로 오른쪽에 있는 경우
+								{
+									balNode->parent->rnext = balNode->rnext;
+									balNode->rnext->parent = balNode->parent;
+								}
+								else if (balNode == balNode->parent->lnext) // 부모 노드 기준으로 왼쪽에 있는 경우
+								{
+									balNode->parent->lnext = balNode->rnext;
+									balNode->rnext->parent = balNode->parent;
+								}
+
+							}
+							// +2이기 때문에 left rotate
+							treeTmp = balNode->rnext;
+							balNode->rnext = treeTmp->lnext;
+							if (balNode->rnext != NULL)
+								balNode->rnext->parent = balNode;
+
+							balNode->parent = treeTmp;
+							treeTmp->lnext = balNode;
+
+						}
+
+					}
+
+					// -2 이상일 경우 right rotation
+					if (r_balance - l_balance <= -2)
+					{
+						if (tmp_balance > 0) // -와 +이기 때문에 double right rotate ( left 후 right )
+						{
+
+							doubleNode = balNode->lnext;
+							balNode->lnext = doubleNode->rnext;
+							doubleNode->rnext->parent = balNode;
+
+							doubleNode->parent = doubleNode->rnext;
+							doubleNode->rnext = doubleNode->rnext->lnext;
+							doubleNode->parent->lnext = doubleNode;
+							if(doubleNode->rnext != NULL)
+								doubleNode->rnext->parent = doubleNode;
+
+							j = 1;
+						}
+						else
+						{
+							if (balNode->parent == NULL) // 밸런스 깨진 노드가 root인 경우
+							{
+								balNode->lnext->parent = NULL;
+								*head = balNode->lnext;
+							}
+							else
+							{
+								if (balNode == balNode->parent->lnext) // 부모 노드 기준으로 왼쪽에 있는 경우
+								{
+									balNode->parent->lnext = balNode->lnext;
+									balNode->lnext->parent = balNode->parent;
+								}
+								else if (balNode == balNode->parent->rnext) // 부모 노드 기준으로 오른쪽에 있는 경우
+								{
+									balNode->parent->rnext = balNode->lnext;
+									balNode->lnext->parent = balNode->parent;
+								}
+							}
+
+							// -2이기 때문에 right rotate
+							treeTmp = balNode->lnext;
+							balNode->lnext = treeTmp->rnext;
+							if (balNode->lnext != NULL)
+								balNode->lnext->parent = balNode;
+
+							balNode->parent = treeTmp;
+							treeTmp->rnext = balNode;
+
+						}
+					}
+
+					tmp_balance = r_balance - l_balance;
+
+					if (j == 0)
+						treeTmp = balNode->parent;
+					else if (j == 1) // double left rotate가 발생한 경우
+						treeTmp = balNode;
+				}
+			}
+		} // while문 끝
+
+		fclose(fp);
+		end = clock(); // 시간 측정 종료
+
+		// 트리 생성 시간을 각 파일의 마지막에 씀
+		fp = fopen(fileName, "a");
+		fprintf(fp, "AVL 생성시간 : %.3lf 밀리초\n", (double)(end - start));
+		fclose(fp);
+
+		printf("%d 번째 트리 생성 완료\n", i);
+
+		Insert_Avl_Tree(head, fileName, i); // AVL 트리에서 한개의 데이터 삽입
+		Delete_Avl_Tree(head, fileName, i); // AVL 트리에서 한개의 데이터 삭제
+
+		*head = NULL;
+
+	} // repeat cnt for문의 끝부분
+
+}
+
+void Insert_Avl_Tree(treeData **head, char *fileName, int treeCnt)
+{
+	FILE *fp;
+
+	// 제어변수
+	int i,j;
+
+	// 밸런스팩터 계산 변수
+	int r_tmp1, r_tmp2;
+	int r_balance = 0;
+	int l_tmp1, l_tmp2;
+	int l_balance = 0;
+	int tmp_balance = 0; // double rotate 유무 확인
+
+	// 삽입할 데이터, 랜덤으로 제너레이트
+	int insert_data;
+
+	// 시간 측정 변수 clock_t로는 정확한 시간 측정이 불가능 하여 출처의 방법을 사용
+	//clock_t start, end;
+	// 출처 : https://www.npteam.net/50
+	LARGE_INTEGER liCounter1, liCounter2, liFrequency;
+
+	// 트리를 위한 변수
+	treeData *newNode;
+	treeData *treeTmp;
+	treeData *treePre;
+	treeData *balNode;
+	treeData *doubleNode;
+
+	srand((unsigned)time(NULL));
+	insert_data = rand() % MAX_RANGE + MIN_RANGE;
+
+	//start = clock(); // 시간 측정 시작
+	QueryPerformanceFrequency(&liFrequency);
+	QueryPerformanceCounter(&liCounter1);
+
+	treeTmp = *head;
+
+	newNode = (treeData *)malloc(sizeof(treeData));
+	newNode->num = insert_data;
+	newNode->lnext = NULL;
+	newNode->rnext = NULL;
+	newNode->parent = NULL;
+
+	// treeTmp를 삽입할 위치까지 이동시킴
+	while (treeTmp != NULL)
+	{
+		treePre = treeTmp;
+		if (newNode->num < treeTmp->num)
+			treeTmp = treeTmp->lnext;
+		else
+			treeTmp = treeTmp->rnext;
+	}
+	// tmp 이동 끝
+
+	treeTmp = treePre; // tmp를 널 전으로 돌아오게 함
+	if (newNode->num < treeTmp->num) // newNode가 tmp의 값보다 작다면
+	{
+		treeTmp->lnext = newNode;
+		treeTmp->lnext->parent = treePre;
+	}
+	else
+	{
+		treeTmp->rnext = newNode;
+		treeTmp->rnext->parent = treePre;
+	}
+	// 삽입 끝
+
+	// 삽입 후 밸런스가 깨졌는지 계산 후 트리를 리빌드함
+	// Create_Avl_Tree와 같음
+	while (treeTmp != NULL) // treeTmp가 root일때까지 돌음
+	{
+		j = 0;
+		//밸런스 팩터를 계산
+		balNode = treeTmp;
+		r_balance = l_balance = 0;
+		r_tmp1 = r_tmp2 = 0;
+		l_tmp1 = l_tmp2 = 0;
+
+		treeTmp = balNode;
+
+		//printf("%d\n", data); // 무한루프 test
+		if (treeTmp->rnext != NULL)
+		{
+			treeTmp = treeTmp->rnext;
+			r_tmp1++;
+			r_tmp2++;
+			// tmp를 이동시키면서 right 밸런스팩터 계산
+			while (1)
+			{
+				if (treeTmp->rnext != NULL)
+				{
+					treeTmp = treeTmp->rnext;
+					r_tmp1++;
+				}
+				else if (treeTmp->lnext != NULL)
+				{
+					treeTmp = treeTmp->lnext;
+					r_tmp1++;
+				}
+				else
+					break;
+			}
+
+			treeTmp = balNode->rnext;
+			while (treeTmp != NULL)
+			{
+				if (treeTmp->num > newNode->num)
+				{
+					treeTmp = treeTmp->lnext;
+					r_tmp2++;
+				}
+				else
+				{
+					treeTmp = treeTmp->rnext;
+					r_tmp2++;
+				}
+			}
+			r_tmp2--; // 하나 더 갔으므로
+			if (r_tmp1 >= r_tmp2)
+				r_balance = r_tmp1;
+			else
+				r_balance = r_tmp2;
+		}
+
+		treeTmp = balNode;
+		// tmp를 이동시키면서 left 밸런스팩터 계산
+		if (treeTmp->lnext != NULL)
+		{
+			treeTmp = treeTmp->lnext;
+			l_tmp1++;
+			l_tmp2++;
+			while (1)
+			{
+				if (treeTmp->lnext != NULL)
+				{
+					treeTmp = treeTmp->lnext;
+					l_tmp1++;
+				}
+				else if (treeTmp->rnext != NULL)
+				{
+					treeTmp = treeTmp->rnext;
+					l_tmp1++;
+				}
+				else
+					break;
+			}
+
+			treeTmp = balNode->lnext;
+			while (treeTmp != NULL)
+			{
+				if (treeTmp->num > newNode->num)
+				{
+					treeTmp = treeTmp->lnext;
+					l_tmp2++;
+				}
+				else
+				{
+					treeTmp = treeTmp->rnext;
+					l_tmp2++;
+				}
+			}
+			l_tmp2--; // 하나 더 갔으므로
+			if (l_tmp1 >= l_tmp2)
+				l_balance = l_tmp1;
+			else
+				l_balance = l_tmp2;
+		}
+
+		// 밸런스가 깨졌을 경우
+
+		// +2 이상일 경우 left rotation
+		if (r_balance - l_balance >= 2)
+		{
+			if (tmp_balance < 0) // +와 -이기 때문에 double left rotate ( right 후 left )
+			{
+				doubleNode = balNode->rnext;
+				balNode->rnext = doubleNode->lnext;
+				doubleNode->lnext->parent = balNode;
+
+				doubleNode->parent = doubleNode->lnext;
+				doubleNode->lnext = doubleNode->lnext->rnext;
+				doubleNode->parent->rnext = doubleNode;
+				if (doubleNode->lnext != NULL)
+					doubleNode->lnext->parent = doubleNode;
+
+				j = 1;
+			}
+			else
+			{
+				if (balNode->parent == NULL) // 밸런스 깨진 노드가 root인 경우
+				{
+					balNode->rnext->parent = NULL;
+					*head = balNode->rnext;
+				}
+				else
+				{
+					if (balNode == balNode->parent->rnext) // 부모 노드 기준으로 오른쪽에 있는 경우
+					{
+						balNode->parent->rnext = balNode->rnext;
+						balNode->rnext->parent = balNode->parent;
+					}
+					else if (balNode == balNode->parent->lnext) // 부모 노드 기준으로 왼쪽에 있는 경우
+					{
+						balNode->parent->lnext = balNode->rnext;
+						balNode->rnext->parent = balNode->parent;
+					}
+
+				}
+				// +2이기 때문에 left rotate
+				treeTmp = balNode->rnext;
+				balNode->rnext = treeTmp->lnext;
+				if (balNode->rnext != NULL)
+					balNode->rnext->parent = balNode;
+
+				balNode->parent = treeTmp;
+				treeTmp->lnext = balNode;
+
+			}
+
+		}
+
+		// -2 이상일 경우 right rotation
+		if (r_balance - l_balance <= -2)
+		{
+			if (tmp_balance > 0) // -와 +이기 때문에 double right rotate ( left 후 right )
+			{
+
+				doubleNode = balNode->lnext;
+				balNode->lnext = doubleNode->rnext;
+				doubleNode->rnext->parent = balNode;
+
+				doubleNode->parent = doubleNode->rnext;
+				doubleNode->rnext = doubleNode->rnext->lnext;
+				doubleNode->parent->lnext = doubleNode;
+				if (doubleNode->rnext != NULL)
+					doubleNode->rnext->parent = doubleNode;
+
+				j = 1;
+			}
+			else
+			{
+				if (balNode->parent == NULL) // 밸런스 깨진 노드가 root인 경우
+				{
+					balNode->lnext->parent = NULL;
+					*head = balNode->lnext;
+				}
+				else
+				{
+					if (balNode == balNode->parent->lnext) // 부모 노드 기준으로 왼쪽에 있는 경우
+					{
+						balNode->parent->lnext = balNode->lnext;
+						balNode->lnext->parent = balNode->parent;
+					}
+					else if (balNode == balNode->parent->rnext) // 부모 노드 기준으로 오른쪽에 있는 경우
+					{
+						balNode->parent->rnext = balNode->lnext;
+						balNode->lnext->parent = balNode->parent;
+					}
+				}
+
+				// -2이기 때문에 right rotate
+				treeTmp = balNode->lnext;
+				balNode->lnext = treeTmp->rnext;
+				if (balNode->lnext != NULL)
+					balNode->lnext->parent = balNode;
+
+				balNode->parent = treeTmp;
+				treeTmp->rnext = balNode;
+
+			}
+		}
+
+		tmp_balance = r_balance - l_balance;
+
+		if (j == 0)
+			treeTmp = balNode->parent;
+		else if (j == 1) // double left rotate가 발생한 경우
+			treeTmp = balNode;
+	}// while문 끝
+
+	//end = clock(); // 시간 측정 종료
+	QueryPerformanceCounter(&liCounter2);
+
+	fp = fopen(fileName, "a");
+	//fprintf(fp, "BST 1개의 데이터 삽입 시간 : %lf 밀리초\n", (double)(end - start) );
+	fprintf(fp, "AVL 1개의 데이터 삽입 시간 : %f 초\n", (double)(liCounter2.QuadPart - liCounter1.QuadPart) / (double)liFrequency.QuadPart);
+	fclose(fp);
+
+	printf("%d번째 트리 삽입 완료\n", treeCnt);
+}
+
+void Delete_Avl_Tree(treeData **head, char *fileName, int treeCnt)
+{
+	FILE *fp;
+
+	// 삭제할 데이터
+	int delete_data;
+	int delete_pos; // 삭제할 데이터의 위치를 랜덤 제너레이트
+
+	// 시간 측정 변수
+	// 시간 측정 변수 clock_t로는 정확한 시간 측정이 불가능 하여 출처의 방법을 사용
+	//clock_t start, end;
+	// 출처 : https://www.npteam.net/50
+	LARGE_INTEGER liCounter1, liCounter2, liFrequency;
+
+	// 트리를 위한 변수
+	treeData *newNode;
+	treeData *treeTmp;
+	treeData *xNode;
+	treeData * deleteNode;
+	treeData *balNode;
+	treeData *doubleNode;
+
+	// 밸런스팩터 계산 변수
+	int r_tmp1, r_tmp2;
+	int r_balance = 0;
+	int l_tmp1, l_tmp2;
+	int l_balance = 0;
+	int tmp_balance = 0; // double rotate 유무 확인
+
+	int i,j;
+
+	srand((unsigned)time(NULL));
+	delete_pos = rand() % DATA_CNT + 1;
+
+	// 삭제할 랜덤 데이터를 파일에서 찾음
+	fp = fopen(fileName, "r");
+	//fp = fopen("avl.txt", "r");
+	for (i = 0; i < delete_pos; i++)
+		fscanf(fp, "%d", &delete_data);
+	fclose(fp);
+
+	printf("삭제할 데이터 : %d\n", delete_data);
+
+	treeTmp = *head;
+
+	newNode = (treeData *)malloc(sizeof(treeData));
+	newNode->num = delete_data;
+	newNode->lnext = NULL;
+	newNode->rnext = NULL;
+	newNode->parent = NULL;
+
+	deleteNode = *head;
+
+	//start = clock(); // 시간 측정 시작
+	QueryPerformanceFrequency(&liFrequency);
+	QueryPerformanceCounter(&liCounter1);
+
+	// treeTmp 노드를 이동시킴 (삭제할 노드의 위치를 찾음)
+	while (treeTmp->num != newNode->num)
+	{
+		if (newNode->num < treeTmp->num)
+			treeTmp = treeTmp->lnext;
+		else
+			treeTmp = treeTmp->rnext;
+	}
+	// tmp 이동 끝
+
+	// 수업 시간에 했던 Delete의 수도코드를 보고 작성
+	// z가 treeTmp이고, y가 deleteNode이고, x가 xNode 이다.
+	if (treeTmp->lnext == NULL || treeTmp->rnext == NULL)
+		deleteNode = treeTmp;
+	else // 자식이 둘 다 살아있는 경우
+	{
+		// treeTmp의 오른쪽의 미니멈을 찾음
+		deleteNode = treeTmp->rnext;
+
+		while (deleteNode->lnext != NULL)
+			deleteNode = deleteNode->lnext;
+	}
+
+	if (deleteNode->lnext != NULL)
+		xNode = deleteNode->lnext;
+	else
+		xNode = deleteNode->rnext;
+
+	if (xNode != NULL)
+		xNode->parent = deleteNode->parent;
+
+	if (deleteNode->parent == NULL) // 삭제할 노드가 root인 경우
+		*head = xNode;
+	else
+	{
+		if (deleteNode == deleteNode->parent->lnext)
+			deleteNode->parent->lnext = xNode;
+		else
+			deleteNode->parent->rnext = xNode;
+	}
+
+	if (deleteNode != treeTmp)
+		treeTmp->num = deleteNode->num;
+	else // 자식을 1개 갖고 있거나
+		// 자식을 갖고 있지 않은 노드가 삭제될 경우
+		treeTmp = treeTmp->parent; // 삭제된 부모 노드부터 밸런스 팩터 계산
+
+	free(deleteNode);
+
+	// 삭제 끝
+
+	// 삭제 후 밸런스가 깨졌는지 계산 후 트리를 리빌드함
+	// Create_Avl_Tree와 같음
+	while (treeTmp != NULL) // treeTmp가 root일때까지 돌음
+	{
+		j = 0;
+		//밸런스 팩터를 계산
+		balNode = treeTmp;
+		r_balance = l_balance = 0;
+		r_tmp1 = r_tmp2 = 0;
+		l_tmp1 = l_tmp2 = 0;
+
+		treeTmp = balNode;
+
+		//printf("%d\n", data); // 무한루프 test
+		if (treeTmp->rnext != NULL)
+		{
+			treeTmp = treeTmp->rnext;
+			r_tmp1++;
+			r_tmp2++;
+			// tmp를 이동시키면서 right 밸런스팩터 계산
+			while (1)
+			{
+				if (treeTmp->rnext != NULL)
+				{
+					treeTmp = treeTmp->rnext;
+					r_tmp1++;
+				}
+				else if (treeTmp->lnext != NULL)
+				{
+					treeTmp = treeTmp->lnext;
+					r_tmp1++;
+				}
+				else
+					break;
+			}
+
+			treeTmp = balNode->rnext;
+			while (treeTmp != NULL)
+			{
+				if (treeTmp->num > newNode->num)
+				{
+					treeTmp = treeTmp->lnext;
+					r_tmp2++;
+				}
+				else
+				{
+					treeTmp = treeTmp->rnext;
+					r_tmp2++;
+				}
+			}
+			r_tmp2--; // 하나 더 갔으므로
+			if (r_tmp1 >= r_tmp2)
+				r_balance = r_tmp1;
+			else
+				r_balance = r_tmp2;
+		}
+
+		treeTmp = balNode;
+		// tmp를 이동시키면서 left 밸런스팩터 계산
+		if (treeTmp->lnext != NULL)
+		{
+			treeTmp = treeTmp->lnext;
+			l_tmp1++;
+			l_tmp2++;
+			while (1)
+			{
+				if (treeTmp->lnext != NULL)
+				{
+					treeTmp = treeTmp->lnext;
+					l_tmp1++;
+				}
+				else if (treeTmp->rnext != NULL)
+				{
+					treeTmp = treeTmp->rnext;
+					l_tmp1++;
+				}
+				else
+					break;
+			}
+
+			treeTmp = balNode->lnext;
+			while (treeTmp != NULL)
+			{
+				if (treeTmp->num > newNode->num)
+				{
+					treeTmp = treeTmp->lnext;
+					l_tmp2++;
+				}
+				else
+				{
+					treeTmp = treeTmp->rnext;
+					l_tmp2++;
+				}
+			}
+			l_tmp2--; // 하나 더 갔으므로
+			if (l_tmp1 >= l_tmp2)
+				l_balance = l_tmp1;
+			else
+				l_balance = l_tmp2;
+		}
+
+		// 밸런스가 깨졌을 경우
+
+		// +2 이상일 경우 left rotation
+		if (r_balance - l_balance >= 2)
+		{
+			if (tmp_balance < 0) // +와 -이기 때문에 double left rotate ( right 후 left )
+			{
+				doubleNode = balNode->rnext;
+				balNode->rnext = doubleNode->lnext;
+				doubleNode->lnext->parent = balNode;
+
+				doubleNode->parent = doubleNode->lnext;
+				doubleNode->lnext = doubleNode->lnext->rnext;
+				doubleNode->parent->rnext = doubleNode;
+				if (doubleNode->lnext != NULL)
+					doubleNode->lnext->parent = doubleNode;
+
+				j = 1;
+			}
+			else
+			{
+				if (balNode->parent == NULL) // 밸런스 깨진 노드가 root인 경우
+				{
+					balNode->rnext->parent = NULL;
+					*head = balNode->rnext;
+				}
+				else
+				{
+					if (balNode == balNode->parent->rnext) // 부모 노드 기준으로 오른쪽에 있는 경우
+					{
+						balNode->parent->rnext = balNode->rnext;
+						balNode->rnext->parent = balNode->parent;
+					}
+					else if (balNode == balNode->parent->lnext) // 부모 노드 기준으로 왼쪽에 있는 경우
+					{
+						balNode->parent->lnext = balNode->rnext;
+						balNode->rnext->parent = balNode->parent;
+					}
+
+				}
+				// +2이기 때문에 left rotate
+				treeTmp = balNode->rnext;
+				balNode->rnext = treeTmp->lnext;
+				if (balNode->rnext != NULL)
+					balNode->rnext->parent = balNode;
+
+				balNode->parent = treeTmp;
+				treeTmp->lnext = balNode;
+
+			}
+
+		}
+
+		// -2 이상일 경우 right rotation
+		if (r_balance - l_balance <= -2)
+		{
+			if (tmp_balance > 0) // -와 +이기 때문에 double right rotate ( left 후 right )
+			{
+
+				doubleNode = balNode->lnext;
+				balNode->lnext = doubleNode->rnext;
+				doubleNode->rnext->parent = balNode;
+
+				doubleNode->parent = doubleNode->rnext;
+				doubleNode->rnext = doubleNode->rnext->lnext;
+				doubleNode->parent->lnext = doubleNode;
+				if (doubleNode->rnext != NULL)
+					doubleNode->rnext->parent = doubleNode;
+
+				j = 1;
+			}
+			else
+			{
+				if (balNode->parent == NULL) // 밸런스 깨진 노드가 root인 경우
+				{
+					balNode->lnext->parent = NULL;
+					*head = balNode->lnext;
+				}
+				else
+				{
+					if (balNode == balNode->parent->lnext) // 부모 노드 기준으로 왼쪽에 있는 경우
+					{
+						balNode->parent->lnext = balNode->lnext;
+						balNode->lnext->parent = balNode->parent;
+					}
+					else if (balNode == balNode->parent->rnext) // 부모 노드 기준으로 오른쪽에 있는 경우
+					{
+						balNode->parent->rnext = balNode->lnext;
+						balNode->lnext->parent = balNode->parent;
+					}
+				}
+
+				// -2이기 때문에 right rotate
+				treeTmp = balNode->lnext;
+				balNode->lnext = treeTmp->rnext;
+				if (balNode->lnext != NULL)
+					balNode->lnext->parent = balNode;
+
+				balNode->parent = treeTmp;
+				treeTmp->rnext = balNode;
+
+			}
+		}
+
+		tmp_balance = r_balance - l_balance;
+
+		if (j == 0)
+			treeTmp = balNode->parent;
+		else if (j == 1) // double left rotate가 발생한 경우
+			treeTmp = balNode;
+	}// while문 끝
+
+	//end = clock(); // 시간 측정 종료
+	QueryPerformanceCounter(&liCounter2);
+
+	fp = fopen(fileName, "a");
+	//fprintf(fp, "BST 1개의 데이터 삭제 시간 : %lf 밀리초\n", (double)(end - start));
+	fprintf(fp, "AVL 1개의 데이터 삭제 시간 : %f 초\n", (double)(liCounter2.QuadPart - liCounter1.QuadPart) / (double)liFrequency.QuadPart);
+	fclose(fp);
+
+	printf("%d번째 트리 삭제 완료\n", treeCnt);
+}
