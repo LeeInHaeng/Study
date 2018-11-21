@@ -19,7 +19,7 @@
     </div>
     <script>
         
-        ////// get and post function //////////
+        ////// get and post class //////////
         ////// .get(URL, callback)  ,  .post(URL, data, callback) ///////
         const HttpClient = function() {
             this.get = function(aUrl, aCallback) {
@@ -71,6 +71,30 @@
                 });
                 */
             },false);
+        
+        /*
+        ////////// mysql db test && ajax test ///////////
+        document.getElementById("dbAccess").addEventListener("click",
+            function(e){
+                const client = new HttpClient();
+                const userid = document.getElementById("userid").value;
+                const userpass = document.getElementById("userpass").value;
+                
+                const userInfo = {
+                    userid : userid,
+                    userpass : userpass
+                };
+                
+                client.post('http://localhost:3001/login.html', userInfo, 
+                    function(response) {
+                        response = JSON.parse(response);
+                        console.log(response);
+                        for(let i=0; i<response.length; i++){
+                            console.log(response[i]);
+                        }
+                });
+        },false);
+        */
     </script>
 </body>
 </html>

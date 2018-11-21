@@ -24,7 +24,8 @@ app.get('/failed.html',function(req,res){
     res.sendFile(__dirname+'/failed.html');
 });
 
-// get test
+/*
+/////////// get test /////////////
 app.get('/login.html',function(req,res){
     //console.log(req.query);
     if(req.query.userid==='aaa' && req.query.userpass==='asd'){
@@ -34,8 +35,10 @@ app.get('/login.html',function(req,res){
         res.redirect('/failed.html');    
     } 
 });
+*/
 
-// post test
+/*
+/////////// post test ////////////
 app.use(bodyParser.urlencoded({ extended: true })); 
 app.use(bodyParser.json());
 
@@ -48,3 +51,40 @@ app.post('/login.html',function(req,res){
         res.redirect('/failed.html');    
     } 
 });
+*/
+
+/*
+/////////// db access test && Ajax ///////////////
+app.use(bodyParser.urlencoded({ extended: true })); 
+app.use(bodyParser.json());
+
+const connection = mysql.createConnection({
+    host: '127.0.0.1',
+    user: 'root',
+    password: '1234',
+    port: 3307,
+    // schema
+    database: 'nodejstest'
+});
+
+app.post('/login.html',function(req,res){
+    //console.log(req.body);
+    let query = "insert into userinfo(userid,userpass) values(?,?)";
+    let param = [req.body.userid, req.body.userpass];
+    connection.query(query,param,function(err,row,field){
+    if(!err){
+        query = "select * from userinfo";
+        connection.query(query,function(err,row,field){
+            if(!err){
+                res.send(row);
+                //connection.end();
+            }
+            else
+                console.log(err);
+        });
+    }
+    else
+        console.log(err);
+    }); 
+});
+*/
