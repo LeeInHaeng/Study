@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="http://localhost:3001/socket.io/socket.io.js"></script>
     <title>nodeJS 정리</title>
 </head>
 
@@ -16,6 +17,7 @@
     </div>
     <div>
         <button id="dbAccess">DB에 접근(MySQL)</button>
+        <button id="socketio">socketio test</button>
     </div>
     <script>
         
@@ -95,6 +97,26 @@
                 });
         },false);
         */
+        
+        /*
+        ////////// socketio test ///////////
+        document.getElementById("socketio").addEventListener("click",
+            function(e){
+                const socket=io();
+                const userid = document.getElementById("userid").value;
+                const userpass = document.getElementById("userpass").value;
+                const userInfo = {
+                    userid : userid,
+                    userpass : userpass
+                };
+                socket.emit('request database',userInfo);
+            
+                socket.on('database data',function(data){
+                    console.log(data);
+                });
+        },false);
+        */
+        
     </script>
 </body>
 </html>

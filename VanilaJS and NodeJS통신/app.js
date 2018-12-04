@@ -9,7 +9,7 @@ const bodyParser = require('body-parser');
 app.use(express.static(__dirname+'/public'));
 
 server.listen(3001, function() {
-  console.log('Socket IO server listening on port 3001');
+  console.log('http server listening on port 3001');
 });
 
 app.get('/', function(req, res){
@@ -86,5 +86,63 @@ app.post('/login.html',function(req,res){
     else
         console.log(err);
     }); 
+});
+*/
+
+/*
+/////////// socketio test ////////////
+
+////// socketio message reference //////
+ // sending to sender-client only
+ //socket.emit('message', "this is a test");
+
+ // sending to all clients, include sender
+ //io.emit('message', "this is a test");
+
+ // sending to all clients except sender
+ //socket.broadcast.emit('message', "this is a test");
+
+ // sending to all clients in 'game' room(channel) except sender
+ //socket.broadcast.to('game').emit('message', 'nice game');
+
+ // sending to all clients in 'game' room(channel), include sender
+ //io.in('game').emit('message', 'cool game');
+
+ // sending to sender client, only if they are in 'game' room(channel)
+ //socket.to('game').emit('message', 'enjoy the game');
+
+ // sending to all clients in namespace 'myNamespace', include sender
+ //io.of('myNamespace').emit('message', 'gg');
+
+ // sending to individual socketid
+ //socket.broadcast.to(socketid).emit('message', 'for your eyes only');
+
+io.on('connection', function(socket){
+    console.log('user connected');
+    
+    socket.on('disconnect',function(){
+        console.log('user disconnected');
+        socket.disconnect();
+    });
+    
+    socket.on('request database',function(data){
+        console.log(data);
+        const connection = mysql.createConnection({
+            host: '127.0.0.1',
+            user: 'root',
+            password: '1234',
+            port: 3307,
+            // schema
+            database: 'nodejstest'
+        });
+        let query = "select * from userinfo";
+        connection.query(query,function(err,row,field){
+            if(!err){
+                socket.emit('database data',row);
+            }
+            else
+                console.log(err);
+        });
+    });
 });
 */
