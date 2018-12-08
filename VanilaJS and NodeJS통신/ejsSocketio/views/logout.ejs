@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <script src="/javascripts/socket.io.js"></script>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+  </head>
+  <body>
+    <h1><%= title %></h1>
+    <h1><%= preSession %></h1>
+    <h1><%= curSession %></h1>
+    <button id="mySocketio">socketio 통신</button>
+
+    <script>
+      var socket = io('http://localhost:3000');
+
+      document.getElementById('mySocketio').addEventListener('click',function(e){
+        console.log('click!');
+        socket.emit('logout socketio communication','hihi');
+      });
+
+      socket.on('logout socketio communication response',function(data){
+        alert(data);
+      });
+    </script>
+  </body>
+</html>
