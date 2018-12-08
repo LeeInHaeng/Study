@@ -1,0 +1,38 @@
+import numpy as np
+import matplotlib.image as img
+
+path = "C:\\testData\\"
+trainData = np.zeros((20 * 16, 8))
+meanData = np.zeros((20 * 16, 10))
+for i in range(0, 10, 1):
+    for j in range(1, 8, 1):
+        fn = path + "digit%d_%d.bmp" % (i, j)
+        xi = img.imread(fn)
+        x = xi[:, :, 0].reshape(16 * 20) / 255
+        trainData[:, j] = x
+    meanData[:, i] = np.mean(trainData, 1)
+
+suc = 0
+fail = 0
+for i in range(0,10,1):
+    for j in range(1,8,1):
+        k = "digit%d_%d.bmp" % (i,j)
+        print(k)
+        fn = path + k
+        x = img.imread(fn)
+        data = x[:, :, 0].reshape(16*20) / 255
+        distArray = []
+        
+        for z in range(0, 10, 1):
+            dist = np.linalg.norm(meanData[:, z] - data)
+            distArray.append(dist)
+            minVal = distArray.index(min(distArray))
+        
+        print("인풋 이미지는["+k+"] 이고 학습 숫자는 [ %d ] 입니다" % (minVal))
+        if minVal==i:
+            suc+=1
+        else:
+            fail+=1
+print("성공 : %d, 실패 : %d" % (suc,fail))
+accu = suc/(suc+fail)*100
+print("정확도 : %d" % accu)
