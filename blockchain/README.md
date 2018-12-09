@@ -1,5 +1,6 @@
 # 블록체인 강의
 - https://www.youtube.com/watch?v=f93ZUv85PBg&list=PL7jH19IHhOLPoITW9XI5LUHtiSFLtp9Up
+- http://www.chaintalk.io/archive/lecture
 
 # 블록체인
 - 블록을 변경, 삭제할 수 없는 거대한 데이터베이스 (Append Only)
