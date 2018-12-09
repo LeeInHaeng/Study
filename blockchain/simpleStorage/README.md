@@ -1,2 +1,2 @@
-# °­ÀÇ URL
+# ?? URL
 - http://www.chaintalk.io/archive/lecture/501
