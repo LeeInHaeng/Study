@@ -1,4 +1,4 @@
-let contractAddress = '0x794adfde9c1cca5aaff6f377a474e69c2b559b86';
+let contractAddress = "0xb16f5b69ddb6015c4dbbf77c2d16e26f9a4fc991";
 let abi = [
 	{
 		"constant": false,
@@ -24,25 +24,6 @@ let abi = [
 		"payable": false,
 		"stateMutability": "nonpayable",
 		"type": "constructor"
-	},
-	{
-		"constant": true,
-		"inputs": [
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "candidateList",
-		"outputs": [
-			{
-				"name": "",
-				"type": "bytes32"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
 	},
 	{
 		"constant": true,
@@ -81,25 +62,6 @@ let abi = [
 		"payable": false,
 		"stateMutability": "view",
 		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [
-			{
-				"name": "",
-				"type": "bytes32"
-			}
-		],
-		"name": "votesReceived",
-		"outputs": [
-			{
-				"name": "",
-				"type": "uint8"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
 	}
 ];
 
@@ -120,6 +82,16 @@ function refreshVote(){
     }
 }
 
+function validCandidate(){
+	let candidateName = document.getElementById("candidate").value;
+	for(var i=0; i<Object.keys(candidates).length; i++){
+		let name = Object.keys(candidates)[i];
+		if(candidateName===name)
+			return true;
+	}
+	return false;
+}
+
 window.addEventListener('load',function(){
     if(typeof web3 !== 'undefined'){
         this.window.web3 = new Web3(web3.currentProvider);
@@ -134,8 +106,23 @@ document.getElementById('voteBtn').addEventListener('click',function(e){
     let candidateName = document.getElementById("candidate").value;
     let txid;
 
-    simpleVoting.voteForCandidate(candidateName, {from: web3.eth.accounts[0], gas:4700000}, function(e,r){
-        alert(candidateName + " 에게 투표 성공!");
-        refreshVote();
-    });
+	if(validCandidate()){
+		simpleVoting.voteForCandidate(candidateName, {from: web3.eth.accounts[0], gas:4700000}, function(e,r){
+			alert(candidateName + " 에게 투표 성공!");
+			txid = r;
+		});
+	}
+	else{
+		alert("없는 후보자 입니다.");
+	}
+
+	let filter = web3.eth.filter('latest');
+	filter.watch(function(e,r){
+		refreshVote();
+		web3.eth.getTransaction(txid,function(e,r){
+			if (r != null && r.blockNumber > 0) {
+				filter.stopWatching();
+			}
+		});
+	});
 });
