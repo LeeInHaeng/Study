@@ -1,2 +1,2 @@
-# °­ÀÇ URL
+# ?? URL
 - https://cryptozombies.io/ko/course
