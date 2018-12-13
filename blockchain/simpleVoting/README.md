@@ -2,5 +2,7 @@
 https://kr.zastrin.com/courses/22/lessons/1-1
 
 # 필기 사항
-- web console에서 string을 byte32로 변환
-  - web3.padRight(web3.fromAscii('hello'),34)
+- remix : converter.sol을 사용해서 string을 byte32로 변환 (bytes32 input에 넣어주기 위해)
+  - stringToBytes32(hello)
+- voting.sol에서 input 값 (Rama, Nick, Jose)
+  - ["0x52616d6100000000000000000000000000000000000000000000000000000000","0x4e69636b00000000000000000000000000000000000000000000000000000000","0x4a6f736500000000000000000000000000000000000000000000000000000000"]
