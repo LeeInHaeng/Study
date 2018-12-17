@@ -8,7 +8,7 @@
   - contract dog is animal
 - internal과 external
   - internal : 상속 private
-  - external : 인터페이스
+  - external : 인터페이스, 컨트랙트 외부에서만 호출 가능
 - interface를 만드는 방법
   - 기본적인 contract와 같지만, 함수 구조만 선언해 놓은 상태
 - require를 이용한 제한조건
