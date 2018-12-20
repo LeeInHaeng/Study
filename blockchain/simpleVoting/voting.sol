@@ -1,14 +1,16 @@
 pragma solidity ^0.5.1;
 
-contract Voting{
+import "./converter.sol";
+
+contract Voting is Converter{
     // constructor to initialize candidates
     // vote for candidates
     // get count of votes for each candidates
     
     bytes32[] public candidateList;
     mapping (bytes32 => uint8) public votesReceived;
-    constructor(bytes32[] memory candidateNames) public {
-        candidateList = candidateNames;
+    constructor() public {
+        candidateList = [stringToBytes32("Rama"), stringToBytes32("Nick"), stringToBytes32("Jose")];
     }
     
     function voteForCandidate(bytes32 candidate) public {
