@@ -118,9 +118,9 @@ document.getElementById('voteBtn').addEventListener('click',function(e){
 
 	let filter = web3.eth.filter('latest');
 	filter.watch(function(e,r){
-		refreshVote();
 		web3.eth.getTransaction(txid,function(e,r){
 			if (r != null && r.blockNumber > 0) {
+                refreshVote();
 				filter.stopWatching();
 			}
 		});
