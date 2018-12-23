@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <script language="javascript" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="/javascripts/socket.io.js"></script>
+  </head>
+  <body>
+    <h1><%= title %></h1>
+    <p>Welcome to <%= title %></p>
+    <input type="number" id="selectTeam" placeholder="1 or 2">
+    <input type="number" id="ether" placeholder="invest ether">
+    <button id="selectTeamBtn">Betting!</button>
+    <p id="status"></p>
+    <script>
+      var contractAddress = '0x9b5cc67fbb8f59800909d85807d69f0767ccb554';
+      var abi = [
+      {
+        "constant": false,
+        "inputs": [
+          {
+            "name": "_teamSelected",
+            "type": "uint8"
+          }
+        ],
+        "name": "bet",
+        "outputs": [],
+        "payable": true,
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      {
+        "constant": false,
+        "inputs": [
+          {
+            "name": "_winnerTeam",
+            "type": "uint16"
+          }
+        ],
+        "name": "distributePrize",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "constant": false,
+        "inputs": [],
+        "name": "renounceOwnership",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "constant": false,
+        "inputs": [
+          {
+            "name": "_minimumBet",
+            "type": "uint256"
+          }
+        ],
+        "name": "setMinimumBet",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "constant": false,
+        "inputs": [
+          {
+            "name": "newOwner",
+            "type": "address"
+          }
+        ],
+        "name": "transferOwnership",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "name": "previousOwner",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "name": "newOwner",
+            "type": "address"
+          }
+        ],
+        "name": "OwnershipTransferred",
+        "type": "event"
+      },
+      {
+        "constant": true,
+        "inputs": [
+          {
+            "name": "_playerAddress",
+            "type": "address"
+          }
+        ],
+        "name": "checkPlayerExist",
+        "outputs": [
+          {
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "constant": true,
+        "inputs": [],
+        "name": "getTotalBetOne",
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "constant": true,
+        "inputs": [],
+        "name": "getTotalBetTwo",
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "constant": true,
+        "inputs": [],
+        "name": "isOwner",
+        "outputs": [
+          {
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "constant": true,
+        "inputs": [],
+        "name": "owner",
+        "outputs": [
+          {
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "function"
+      }
+    ];
+
+    var socket = io('http://localhost:3000');
+    var simpleBettingContract;
+    var simpleBetting;
+    var web3;
+
+    $(window).on('load', function(){
+      // Checking if Web3 has been injected by the browser (Mist/MetaMask)
+      if (typeof web3 !== 'undefined') {
+        // Use Mist/MetaMask's provider
+        web3 = new Web3(web3.currentProvider);
+      } else {
+        console.log('No web3? You should consider trying MetaMask!')
+        // fallback - use your fallback strategy (local node / hosted node + in-dapp id mgmt / fail)
+        web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+      }
+      // Now you can start your app & access web3 freely:
+      startApp();
+    });
+
+    function startApp(){
+      simpleBettingContract = web3.eth.contract(abi);
+      simpleBetting = simpleBettingContract.at(contractAddress);
+    }
+
+    $("#selectTeamBtn").click(function(){
+      var selectedTeam = $("#selectTeam").val();
+      if(selectedTeam==1 || selectedTeam==2){
+        simpleBetting.checkPlayerExist(web3.eth.accounts[0],function(e,r){
+          if(!r){
+            betting(selectedTeam);
+          }
+          else{
+            alert("이미 베팅 하셨습니다.");
+          }
+        });
+      }
+      else{
+        alert("select 1 or 2 team!");
+      }
+    });
+
+    function betting(team){
+      alert("베팅을 진행합니다.");
+      var txid;
+      var ether = $("#ether").val();
+      simpleBetting.bet(team, {from: web3.eth.accounts[0], value: web3.toWei(ether, "ether")}, function(e,r){
+        txid = r;
+        $("#status").text("베팅 진행 중");
+      });
+
+      var doOnce = false;
+      var filter = web3.eth.filter('latest');
+      filter.watch(function(e,r){
+        web3.eth.getTransaction(txid,function(e,r){
+          if(r != null && r.blockNumber > 0){
+            if(!doOnce){
+              $("#status").text("베팅 완료");
+              socket.emit("player wait");
+              doOnce = true;
+            }
+            filter.stopWatching();
+          }
+        });
+      });
+    }
+    
+    </script>
+  </body>
+</html>

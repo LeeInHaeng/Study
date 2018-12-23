@@ -1,0 +1,111 @@
+pragma solidity ^0.5.2;
+
+import "./safemath.sol";
+import "./ownable.sol";
+
+contract Betting is Ownable{
+    uint private minimumBet;
+    uint private totalBetOne;
+    uint private totalBetTwo;
+    
+    address[] private players;
+    
+    using SafeMath for uint256;
+    
+    /// amountBet : player's betting value
+    /// teamSelected : select 1 or 2
+    struct Player{
+        uint256 amountBet;
+        uint16 teamSelected;
+    }
+    
+    mapping(address => Player) playerInfo;
+    
+    constructor() public {
+        minimumBet = 0.0001 ether;
+    }
+    
+    function setMinimumBet(uint256 _minimumBet) public onlyOwner {
+        minimumBet = _minimumBet;
+    }
+    
+    function checkPlayerExist(address _playerAddress) public view returns(bool){
+        for(uint i=0; i<players.length; i++){
+            if(players[i]==_playerAddress){
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /// frontend function
+    function bet(uint8 _teamSelected) public payable{
+        /// already betting player denied
+        require(!checkPlayerExist(msg.sender));
+        /// player must pay more than minimumBet
+        require(msg.value >= minimumBet);
+        
+        playerInfo[msg.sender].amountBet = msg.value;
+        playerInfo[msg.sender].teamSelected = _teamSelected;
+        players.push(msg.sender);
+        
+        if(_teamSelected == 1){
+            totalBetOne = totalBetOne.add(msg.value);
+        }
+        else{
+            totalBetTwo = totalBetTwo.add(msg.value);
+        }
+    }
+    
+    /// backend function
+    function distributePrize(uint16 _winnerTeam) public {
+        address[] memory winnerPlayers;
+        address payable winnerPlayer;
+        uint winnerCount = 0;
+        uint winnerBet = 0;
+        uint lossBet = 0;
+        
+        if(_winnerTeam==1){
+            winnerBet = totalBetOne;
+            lossBet = totalBetTwo;
+        }
+        else{
+            winnerBet = totalBetTwo;
+            lossBet = totalBetOne;
+        }
+        
+        for(uint i=0; i<players.length; i++){
+            if(playerInfo[players[i]].teamSelected == _winnerTeam){
+                winnerPlayers[winnerCount] = players[i];
+                winnerCount = winnerCount.add(1);
+            }
+        }
+        
+        if(winnerCount != 0){
+            uint betMoney;
+            for(uint j=0; j<winnerCount; j++){
+                betMoney = playerInfo[winnerPlayers[j]].amountBet;
+                /// from address to address payable
+                winnerPlayer = address(uint160(winnerPlayers[j]));
+                uint transferMoney = betMoney.div(winnerBet).mul(lossBet);
+                transferMoney = betMoney.add(transferMoney);
+                winnerPlayer.transfer(transferMoney);
+            }
+        }
+        
+        /// init var
+        totalBetOne = 0;
+        totalBetTwo = 0;
+        for(uint k=0; k<players.length; k++){
+            delete playerInfo[players[k]];
+        }
+        delete players;
+    }
+    
+    function getTotalBetOne() external view returns(uint){
+        return totalBetOne;
+    }
+    function getTotalBetTwo() external view returns(uint){
+        return totalBetTwo;
+    }
+}
