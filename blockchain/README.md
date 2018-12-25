@@ -1,7 +1,3 @@
-# 블록체인 강의
-- https://www.youtube.com/watch?v=f93ZUv85PBg&list=PL7jH19IHhOLPoITW9XI5LUHtiSFLtp9Up
-- http://www.chaintalk.io/archive/lecture
-
 # 블록체인
 - 블록을 변경, 삭제할 수 없는 거대한 데이터베이스 (Append Only)
 
@@ -40,7 +36,7 @@
 - Visual studio Code
 
 - 로컬에서 테스트할 수 있는 환경 제공
-TestRPC : npm install -g ethereumjs-testrpc
+TestRPC : npm install -save ethereumjs-testrpc
 
 - dApp 지갑
 메타마스크 : https://metamask.io/
