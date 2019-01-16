@@ -42,8 +42,8 @@ public class AfterReturningAdvice {
 // xml에서
 <aop:after-returning method="afterLog" pointcut-ref="getPointcut" returning="returnObj"/>
 ```
-  - returning 속성은 after-returning 에서만 사용할 수 있는 속성
-  - 이 속성값은 반드시 어드바이스 메소드 매개변수로 선언된 바인드 변수 이름과 같아야 한다.
+  -- returning 속성은 after-returning 에서만 사용할 수 있는 속성
+  -- 이 속성값은 반드시 어드바이스 메소드 매개변수로 선언된 바인드 변수 이름과 같아야 한다.
 - after throwing 예제
 ```
 public void exceptionLog(JoinPoint jp, Exception exceptObj)
@@ -51,5 +51,5 @@ public void exceptionLog(JoinPoint jp, Exception exceptObj)
 // xml에서
 <aop:after-throwing ~~ throwing="exceptObj"/>
 ```
-  - throwing 속성은 after-throwing 에서만 사용할 수 있는 속성
-  - 이 속성값은 반드시 어드바이스 메소드 매개변수로 선언된 바인드 변수 이름과 같아야 한다.
+  -- throwing 속성은 after-throwing 에서만 사용할 수 있는 속성
+  -- 이 속성값은 반드시 어드바이스 메소드 매개변수로 선언된 바인드 변수 이름과 같아야 한다.
