@@ -83,6 +83,7 @@ public class BoardController {
 	...
 	}
 }
+```
 - 동작 방식을 살펴보면 다음과 같다.
 - 이전에 구현했던 getBoard() 메소드를 살펴보면 Model에 정보를 담는다.
 ```
