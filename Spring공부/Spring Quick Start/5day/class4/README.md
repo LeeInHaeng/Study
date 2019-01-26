@@ -1,4 +1,4 @@
-# JPA의 개념
+# JPA (Java Persistence API) 의 개념
 - ORM(Object-Relation Mapping)은 DB 연동에 필요한 SQL을 자동으로 생성하고, 생성된 SQL은 DBMS가 변경될 때 자동으로 변경된다.
 - ORM 프레임워크로 Hibernate, TopLink, Cocobase 등이 등장했다.
 - 이러한 많은 프레임워크들에 대해 표준화 작업이 필요했고, ORM 구현체들의 공통 인터페이스를 제공하는 것이 JPA다.
