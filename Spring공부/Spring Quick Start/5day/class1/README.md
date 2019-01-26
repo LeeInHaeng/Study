@@ -4,7 +4,7 @@
   - 이를 통해 SQL 명령어를 한 곳에 모아 통합 관리가 가능
 - SQL 명령어 실행 결과를 자바 객체에 자동으로 매핑, 즉 데이터 맵퍼 기능을 제공
 
-# Mybatis 연동
+# Eclipse Mybatis 사용
 - Eclipse 마켓플레이스에서 Mybatis 관련 플러그인 설치
   - MyBatipse 1.2.1
 - pom.xml에 사용할 DB와 Mybatis 관련 Dependency 추가
