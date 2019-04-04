@@ -1,0 +1,65 @@
+﻿@using PagedList.Mvc
+@model PagedList.IPagedList<BoardDemo.Models.Board>
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>board</title>
+    <link href="~/Content/PagedList.css" rel="stylesheet" type="text/css" />
+    <link href="~/Content/bootstrap.css" rel="stylesheet" type="text/css" />
+    <link href="~/Content/bootstrap-theme.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>분류</th>
+                    <th>제목</th>
+                    <th>작성자</th>
+                    <th>등록일</th>
+                    <th>추천 수</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach(var b in Model)
+                {
+                    <tr>
+                        <td>@b.category</td>
+                        <td>
+                            @Html.ActionLink(b.title, "detail", "board",
+                                new { bid = b.bid }, null)
+                            <span class="badge">@b.rCnt</span>
+                        </td>
+                        <td>@b.writer</td>
+                        <td>@b.regDate.ToString("yyyy-MM-dd hh:mm")</td>
+                        <td>@b.recomCnt</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @Html.ActionLink("새 글 등록", "register", "board",
+        null,
+        new { @class = "btn btn-block btn-default"})
+    <div>
+        @Html.PagedListPager(Model, page => Url.Action("Index",
+                                        new { page, category = ViewBag.category }))
+    </div>
+
+    <script type="text/javascript" language="javascript">
+        if('@TempData["result"]' !== ''){
+            alert('@TempData["result"]');
+            @TempData["result"] = "";
+        }
+
+    </script>
+</body>
+</html>

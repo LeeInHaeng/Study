@@ -1,0 +1,74 @@
+﻿@model BoardDemo.Models.Board
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <link href="~/Content/bootstrap-theme.css" rel="stylesheet" type="text/css" />
+    <link href="~/Content/bootstrap.css" rel="stylesheet" type="text/css" />
+    <link href="~/Content/MyValidation.css" rel="stylesheet" type="text/css" />
+    <title>Edit</title>
+</head>
+<body>
+    <div> 
+        @using (Html.BeginForm("Edit", "board"))
+        {
+            @Html.HttpMethodOverride(HttpVerbs.Put)
+
+            foreach (var p in ViewData.ModelMetadata.Properties)
+            {
+                switch (@p.PropertyName)
+                {
+                    case "bid":
+                    case "regDate":
+                    case "rCnt":
+                    case "recomCnt":
+                        break;
+                    case "title":
+                        <div class="form-group">
+                            <label>@p.DisplayName</label>
+                            @Html.TextBox(@p.PropertyName, null, new { @class = "form-control" })
+                            @Html.ValidationMessage(@p.PropertyName, "제목을 입력해 주세요.")
+                        </div>
+                        break;
+                    case "content":
+                        <div class="form-group">
+                            <label>@p.DisplayName</label>
+                            @Html.TextArea(@p.PropertyName, null, new { @class = "form-control", rows = 10 })
+                            @Html.ValidationMessage(@p.PropertyName, "내용을 입력해 주세요.")
+                        </div>
+                        break;
+                    case "writer":
+                        <div class="form-group">
+                            <label>@p.DisplayName</label>
+                            @Html.TextBoxFor(b => b.writer,
+                                new { @class = "form-control readonly", @readonly = "readonly" })
+
+                        </div>
+                        break;
+                    case "category":
+                        <div class="form-group">
+                            <label>@p.DisplayName</label>
+                            @Html.DropDownListFor(b => b.category,
+                                new List<SelectListItem>() {
+                                    new SelectListItem() { Text = "ALL", Value = "ALL" },
+                                    new SelectListItem() { Text = "NOTICE", Value = "NOTICE" }
+                                }, new { @class = "form-control" })
+                        </div>
+                        break;
+                }
+            }
+            <div class="text-center">
+                <input class="btn btn-primary" type="submit" value="글 수정 완료" />
+
+                @Html.ActionLink("수정 취소", "Index", "board", null, new { @class = "btn btn-danger" })
+            </div>
+        }
+    </div>
+</body>
+</html>

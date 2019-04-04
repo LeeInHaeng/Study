@@ -1,0 +1,3 @@
+TS2304 Error : Build error ¡°Cannot find name 'Record'¡± with bootstrap 4
+
+https://www.microsoft.com/ko-KR/download/details.aspx?id=48593

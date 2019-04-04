@@ -1,0 +1,116 @@
+﻿@model IEnumerable<BoardDemo.Models.Replies>
+
+@{ 
+    AjaxOptions ajaxOpts = new AjaxOptions
+    {
+        UpdateTargetId = "replBody",
+        OnSuccess = "registerRepl"
+    };
+}
+
+@using (Ajax.BeginForm("register", "repl", ajaxOpts))
+{
+    <div class="form-group">
+        <label>댓글</label>
+        <span id="rCnt" class="badge">(@Model.Count())</span>
+        @Html.TextArea("replArea", null,
+                            new { @class = "form-control", rows = 1, required = "required" })
+    </div>
+    @Html.Hidden("bid",Model.FirstOrDefault().foreignBoard)
+    <input class="btn btn-primary" type="submit" value="댓글 작성" />
+}
+
+
+@foreach (var r in Model)
+{
+    if (@r.pid == -1)
+    {
+        <div class="replContainer">
+            <div>
+                <span>@r.writer</span>
+                <span>@r.regDate</span>
+                <span>@r.recomCnt</span>
+                <span class="btn btn-default dapgle">답글 달기</span>
+                <span>
+                    @Ajax.ActionLink("댓글 삭제", "delete",
+                    new { rid = @r.rid },
+                    new AjaxOptions
+                    {
+                        UpdateTargetId = "replBody",
+                        OnSuccess = "deleteRepl"
+                    }, new { @class = "btn btn-danger" })
+                </span>
+            </div>
+            <div>
+                @r.content
+            </div>
+            <div id="repl_@r.rid"></div>
+        </div>
+    }
+}
+
+<div id="dapgleModal" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">답글 달기</h5>
+                <button type="button" class="close modalClose" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            @using (Ajax.BeginForm("registerDap", "repl", new AjaxOptions
+            {
+                UpdateTargetId = "replBody",
+                OnSuccess = "registerDap"
+            }))
+            {
+                <div id="dapgleFormElement" class="form-group">
+                    @Html.TextArea("dapgleArea", null,
+                            new { @class = "form-control modal-body", rows = 1, required = "required" })
+
+                    @Html.Hidden("bid", Model.FirstOrDefault().foreignBoard)
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">답글 작성</button>
+                    <button type="button" class="btn btn-secondary modalClose" data-dismiss="modal">취소</button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<script src="~/scripts/jquery-3.3.1.js"></script>
+<script src="~/scripts/jquery.unobtrusive-ajax.js"></script>
+<script type="text/javascript">
+        $(document).ready(() => {
+
+            function registerRepl() {
+                $("#replArea").val("");
+                alert("댓글 등록 완료");
+            }
+
+            function deleteRepl() {
+                alert("댓글 삭제 완료");
+            }
+
+            $(".dapgle").click(e => {
+                $("#dapgleModal").show();
+
+                $("#pid").remove();
+                $("#groupId").remove();
+
+                var pidNode = e.target.parentElement.parentElement.children[e.target.parentElement.parentElement.children.length-1];;
+                var pid = pidNode.id.split("_")[1];
+
+                var groupIdNode = e.target.closest('.replContainer').children[e.target.closest('.replContainer').children.length - 1];
+                var groupId = groupIdNode.id.split("_")[1];
+
+                $("#dapgleFormElement").append('<input type="hidden" id="pid" name="pid" value=' + pid + '>');
+                $("#dapgleFormElement").append('<input type="hidden" id="groupId" name="groupId" value=' + groupId + '>')
+            });
+            $(".modalClose").click(e => {
+                $("#dapgleModal").hide();
+            })
+        });
+</script>
