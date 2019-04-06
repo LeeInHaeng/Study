@@ -1,5 +1,3 @@
-https://www.tutorialspoint.com/flask/flask_overview.htm
-
 # Window10에서 Ubuntu 사용
 - 개발자 모드 설정
   - 윈도우10 시작 ---> 개발자용 설정 검색 ---> 개발자 모드 선택
