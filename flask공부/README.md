@@ -2,7 +2,7 @@
 - https://www.tutorialspoint.com/flask/index.htm
 
 # flaskTest
-- °³¹ß È¯°æ ¼³Á¤
+- ê°œë°œ í™˜ê²½ ì…‹íŒ…
 - Variable Rules
 - URL Building
 - HTTP Methods
