@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+</head>
+
+<body>
+    <div id="app">
+        {{ message }}
+    </div>
+    
+    <div id="app-2">
+        <div v-once>다시는 변경하지 않습니다: {{ msg }}
+            <div>{{ msg }}</div>
+        </div>
+    </div>
+    
+    <div id="app-3">
+        <p>Using mustaches: {{ rawHtml }}</p>
+        <p>Using v-html directive: 
+            <span v-html="rawHtml"></span>
+        </p>
+    </div>
+    
+    <div id="app-4">
+        <div v-bind:id="dynamicId"></div>
+        <button v-bind:disabled="isButtonDisabled">Button</button>
+    </div>
+    
+    <div id="app-5">
+        <p v-show="isMyVisible">보이나요?</p>
+    </div>
+    
+    <div id="app-6">
+        <p v-if="myVal > 5">값이 5보다 커요</p>
+        <p v-else-if="myVal === 5">값이 5에요</p>
+        <p v-else>값이 5보다 작아요</p>
+        
+        <template v-if="myVal > 5">
+            <p>엘리먼트1</p>
+            <p>엘리먼트2</p>
+            <p>엘리먼트3</p>
+        </template>
+    </div>
+    
+    <div id="app-7">
+        <div v-pre>{{ 머스태시 태그가 그대로 출력되요 }}
+            <p>{{ msg }}</p>
+        </div>
+        <p>{{ msg }}</p>
+    </div>
+    
+    <div id="app-8">
+        <ol>
+            <li v-for="(todo, idx) in todos">
+                {{ idx }} {{ todo.text }}
+            </li>
+        </ol>
+        <ul>
+            <li v-for="(val, key, idx) in obj">
+                {{idx}} : {{key}} : {{val}}
+            </li>
+        </ul>
+    </div>
+    
+    <div id="app-9">
+        <p>Model Test! {{ name }}</p>
+        <input type="text" v-model="name"/>
+    </div>
+    
+    <div id="app-10">
+        <p>카운터 : {{ cnt }}</p>
+        <button v-on:click="doSomething1">1씩 증가</button>
+        <button v-on:click="doSomething2(cnt)">cnt씩 증가</button>
+    </div>
+    
+    <div id="app-11">
+        <p>methods속성 : {{ reversedMessage1() }}</p>
+        <p>computed속성 : {{ reversedMessage2 }}</p>
+    </div>
+    
+    <div id="app-12">
+        <p>computed속성 setter 테스트 : {{ fullName }}</p>
+    </div>
+    
+    <div id="app-13">
+        <div class="static" 
+             v-bind:class="{'active' : isActive, 'text-danger' : hasError}">
+        클래스 바인딩
+        </div>
+        <div class="static" 
+             v-bind:class="[activeClass, errorClass]">
+        클래스 바인딩2
+        </div>
+        <div v-bind:style="{ color: activeColor, fontSize: fontSize + 'px' }">
+        클래스 바인딩 3
+        </div>
+        <div v-bind:style="{ display: ['-webkit-box', '-ms-flexbox', 'flex'] }">
+        클래스 바인딩 4
+        </div>
+    </div>
+    
+    <div id="app-14">
+        <ul>
+            <li v-for="n in evenMethods(numbers)">{{ n }}</li>
+        </ul>
+        <ul>
+            <li v-for="n in evenComputed">{{ n }}</li>
+        </ul>
+    </div>
+    
+    <div id="app-15">
+        <input type="checkbox" value="Jack" v-model="checkedName">
+        <input type="checkbox" value="John" v-model="checkedName">
+        <input type="checkbox" value="Mike" v-model="checkedName">
+        <span>{{ checkedName }}</span>
+        <br/>
+        
+        <input type="radio" value="One" v-model="picked">
+        <input type="radio" value="Two" v-model="picked">
+        <span>{{ picked }}</span>
+        <br/>
+        
+        <select v-model="selected" multiple>
+            <option>A</option>
+            <option>B</option>
+            <option>C</option>
+        </select>
+        <span>{{ selected }}</span>
+        <br/>
+        
+        <select v-model="selected2">
+            <option v-for="op in options" v-bind:value="op.value">
+                {{ op.text }}
+            </option>
+        </select>
+        <span>{{ selected2 }}</span>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+    <script>
+        var app = new Vue({
+            el: '#app',
+            data: {
+                message: '안녕하세요 Vue!'
+            }
+        })
+        
+        var app2 = new Vue({
+            el: '#app-2',
+            data: {
+                msg: '변경 X'
+            }
+        })
+        app2.msg = "app2 변경하기"
+        
+        var app3 = new Vue({
+            el: '#app-3',
+            data: {
+                rawHtml: '<span style="color:red">This should be red</span>'
+            }
+        })
+        
+        var app4 = new Vue({
+            el: '#app-4',
+            data: {
+                dynamicId: 'myDynamicID',
+                isButtonDisabled: false
+            }
+        })
+        
+        var app5 = new Vue({
+            el: '#app-5',
+            data: {
+                isMyVisible: true
+            }
+        })
+        
+        var app6 = new Vue({
+            el: '#app-6',
+            data: {
+                myVal : 7
+            }
+        })
+        
+        var app7 = new Vue({
+            el: '#app-7',
+            data: {
+                msg: '머스태시 태그가 그대로 출력 되나요?'
+            }
+        })
+        
+        var app8 = new Vue({
+            el: '#app-8',
+            data: {
+                todos: [
+                    {text : 'Javascript 배우기'},
+                    {text : 'Vue 배우기'},
+                    {text : '무언가 만들기'}
+                ],
+                obj: {
+                    firstName : 'John',
+                    lastName : 'Doe',
+                    age : 30
+                }
+            }
+        })
+        app8.todos.push({ text: 'New item' })
+        
+        var app9 = new Vue({
+            el: '#app-9',
+            data: {
+                name : 'Hello Vue!'
+            }
+        })
+        
+        var app10 = new Vue({
+            el: '#app-10',
+            data: {
+                cnt: 0
+            },
+            methods: {
+                doSomething1: function(){
+                    this.cnt++;
+                },
+                doSomething2: function(paramCnt){
+                    this.cnt += paramCnt;
+                }
+            }
+        })
+        
+        var app11 = new Vue({
+            el: '#app-11',
+            data: {
+                message: '겉모습은 같아요'
+            },
+            methods: {
+                reversedMessage1: function(){
+                    return this.message.split('').reverse().join('')
+                }
+            },
+            computed: {
+                reversedMessage2: function(){
+                    return this.message.split('').reverse().join('')
+                }
+            }
+        })
+        
+        var app12 = new Vue({
+            el: '#app-12',
+            data: {
+                firstName : 'Foo',
+                lastName : 'Bar'
+            },
+            computed: {
+                fullName: {
+                    get: function(){
+                        return this.firstName + ' ' + this.lastName
+                    },
+                    set: function(newName){
+                        var names = newName.split(' ')
+                        this.firstName = names[0]
+                        this.lastName = names[names.length-1]
+                    }
+                }
+            }
+        })
+        app12.fullName = 'In Haeng'
+        
+        var app13 = new Vue({
+            el: '#app-13',
+            data: {
+                isActive: true,
+                hasError: false,
+                activeClass: 'active',
+                errorClass: 'text-danger',
+                activeColor: 'red',
+                fontSize: 30
+            }
+        })
+        
+        var app14 = new Vue({
+            el: '#app-14',
+            data: {
+                numbers: [1,2,3,4,5]
+            },
+            methods: {
+                evenMethods: function(myNum){
+                    return myNum.filter(function(num){
+                        return num % 2 === 0
+                    })
+                }
+            },
+            computed:{
+                evenComputed: function(){
+                    return this.numbers.filter(function(num){
+                        return num % 2 === 0
+                    })
+                }
+            }
+        })
+        
+        var app15 = new Vue({
+            el: '#app-15',
+            data: {
+                checkedName: [],
+                picked: '',
+                selected: [],
+                selected2: '',
+                options: [
+                    {text: 'One', value: 'A'},
+                    {text: 'Two', value: 'B'},
+                    {text: 'Three', value: 'C'}
+                ]
+            }
+        })
+    </script>
+</body>
+</html>
