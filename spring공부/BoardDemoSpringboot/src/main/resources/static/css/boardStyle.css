@@ -1,0 +1,77 @@
+.view_wrap {
+    border: 1px solid #808080
+}
+
+.view_wrap .view_intro {
+    border-bottom: 1px solid #c0c0c0;
+    font-size: 15px
+}
+
+.view_wrap .view_intro .intro1{
+	width: 100%;
+	margin-left: 10px;
+}
+
+.view_wrap .view_intro .intro2{
+	margin-left: 10px;
+}
+
+.view_wrap .view_intro .opt_like{
+	color: #444;
+	font-size: 20px;
+	margin-top: 10px;
+	margin-right: 10px;
+	cursor: pointer
+}
+
+.view_wrap .view_detail {
+	font-size: 15px;
+	line-height: 30px;
+	border-bottom: 1px solid #c0c0c0;
+	color: #444
+}
+
+.view_wrap .view_detail .content_detail{
+	padding: 20px 10px 20px 10px;
+}
+
+.view_wrap .view_detail .tit_subject {
+	width: 100%;
+}
+
+.view_wrap .view_info {
+	height: 52px;
+	padding: 10px 20px 50px 10px;
+}
+
+.area_cmt
+{
+    border:1px solid #e3e3e3;
+    background-color:#f8f8f8;
+    margin: 5px 5px 5px 5px;
+}
+
+.area_cmt .tit_cmt {
+	width:100%; 
+	padding: 17px 0 0 17px;
+	font-size: 13px;
+	color: #000
+}
+
+.area_cmt .fld_cmt
+{
+	width:100%; 
+	padding: 20px 10px 0 10px;
+}
+
+.area_cmt .fld_cmt .write_inp
+{
+	width:100%;
+	border:1px solid #b4b4b4
+}
+
+.area_cmt .fld_cmt .cmt_btn
+{
+	float:right;
+	font-weight:700;
+}

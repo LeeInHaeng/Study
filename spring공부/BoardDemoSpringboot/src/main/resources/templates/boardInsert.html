@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+<title>boardDetail</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+<link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+</head>
+
+<body>
+
+<div class="container">
+	<form th:action="@{/board/insert}" th:object="${board}" method="post">
+		<div class="form-group row">
+			<span class="col-3">
+				<input type="text" class="form-control" name="writer" readonly
+					th:value="${userID}">
+			</span>
+			<span>
+				<select class="form-control" name="category">
+					<option value="ALL">자유 게시판</option>
+					<option value="NOTICE">공지 사항</option>
+				</select>
+			</span>
+		</div>
+		<div class="form-group row">
+			<input type="text" name="title"
+				class="form-control" placeholder="제목을 입력해 주세요."
+				th:required="required"
+				th:value="${board} ? ${board.getTitle()} : ''">
+			<span th:if="${#fields.hasErrors('title')}"
+				class="help-block" th:errors="*{title}"></span>
+		</div>
+		<div class="form-group row">
+			<textarea class="form-control" name="content" 
+				rows="4" placeholder="내용을 입력해 주세요."
+				th:required="required"
+				th:text="${board} ? ${board.getContent()} : ''"></textarea>
+		</div>
+
+		
+		<a th:href="@{/board/ALL}" class="btn btn-default">취소</a>
+		<input type="submit" value="완료" class="btn btn-primary">
+	</form>
+
+<script>
+	var msg = "[[${status}]]";
+	console.log(msg);
+</script>
+</div>

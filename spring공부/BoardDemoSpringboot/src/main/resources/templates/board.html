@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+<title>boardDetail</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+<link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+<link th:href="@{/css/boardStyle.css}" rel="stylesheet" type="text/css">
+<link rel='stylesheet' href='https://use.fontawesome.com/releases/v5.7.0/css/all.css' integrity='sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ' crossorigin='anonymous'>
+
+<script
+  src="https://code.jquery.com/jquery-3.4.0.min.js"
+  integrity="sha256-BJeo0qm959uMBGb65z40ejJYGSgR7REI4+CW1fNKwOg="
+  crossorigin="anonymous"></script>
+
+</head>
+
+<body>
+
+<div>
+		<div id="categoryTab" class="col-2">
+			<ul>
+				<li>ALL 카테고리</li>
+				<li>NOTICE 카테고리</li>
+			</ul>
+		</div>
+		<div class="container view_wrap col-6">
+			<div class="row view_intro">
+				<div class="intro1">
+					<span th:text="${board.getWriter()}"></span>
+					<span class="opt_like far fa-thumbs-up float-right">
+						<span th:text="${board.getRecomCnt()}"></span>
+					</span>
+				</div>
+				<div class="intro2" th:text="${board.getRegDate()}"></div>
+			</div>
+			<div class="row view_detail">
+				<div class="content_detail">
+					<strong class="tit_subject"
+						th:text="${board.getTitle()}">
+					</strong>
+					<div th:text="${board.getContent()}"></div>
+				</div>
+			</div>
+			<div class="row view_info">
+				<a class="btn btn-light"
+					th:href="@{${oldURL}}">목록으로
+				</a>
+			</div>
+			<div class="row area_cmt">
+				<strong class="tit_cmt">
+					<span>댓글</span>
+					<span th:text="${board.getRCnt()}"></span>
+				</strong>
+				<div class="fld_cmt">
+					<textarea class="write_inp"></textarea>
+					<button class="btn cmt_btn">등록</button>
+				</div>
+			</div>
+		</div>
+</div>
+
+<script type="text/javascript">
+
+$(document).ready(function(){
+	
+	$('.cmt_btn').click(() => {
+		
+		var replData = {
+			content: $('.write_inp').val(),
+			writer: 'user00',
+			fbid: [[${board.getBid()}]],
+			csrfToken: '[[${_csrf.token}]]',
+			csrfHeader: '[[${_csrf.headerName}]]'
+		};
+
+		$.ajax({
+			type: "post",
+			url: '/board/replies/insert',
+			data: JSON.stringify(replData),
+			dataType: 'json',
+			beforeSend: function(xhr){
+				xhr.setRequestHeader(replData.csrfHeader, replData.csrfToken);
+			},
+			contentType: "application/json; charset=UTF-8",
+		})
+		.done(reply => {
+			console.log(reply);
+		})
+		
+	});
+});
+
+</script>
+
+</body>
+
+</html>

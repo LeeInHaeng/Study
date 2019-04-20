@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.demo.repo.RepliesDAO">
+
+    <insert id="insertRepl">
+    	insert into replies(content, writer, fbid)
+    	values(#{content}, #{writer}, #{fbid})
+    </insert>
+
+    <select id="getRepl" resultType="com.demo.domain.Replies">
+    </select>
+
+    <select id="getReplList" resultType="com.demo.domain.Replies">
+    </select>
+    
+    <update id="updateRepl">
+    </update>
+    
+    <delete id="deleteRepl">
+    </delete>
+    
+</mapper>

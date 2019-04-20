@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+<title>board</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+<link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+</head>
+
+<body>
+
+<div>
+	<div class="row">
+		<div id="categoryTab" class="col-md-2">
+			<ul>
+				<li>ALL 카테고리</li>
+				<li>NOTICE 카테고리</li>
+			</ul>
+		</div>
+
+		<div id="contents" class="col-md-10">
+			
+		<table class="table" cellspacing="0">
+			<thead>
+				<tr>
+					<td>번호</td>
+					<td>제목</td>
+					<td>작성자</td>
+					<td>작성일</td>
+					<td>추천수</td>
+					<td>댓글</td>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="board : ${boardList.getPageList()}">
+					<td th:text="${board.bid}"></td>
+					<td>
+						<a th:href="@{/board/{bid}(bid=${board.bid})}",
+							th:text="${board.title}"></a>
+					</td>
+					<td th:text="${board.writer}"></td>
+					<td th:text="${board.regDate}"></td>
+					<td th:text="${board.recomCnt}"></td>
+					<td th:text="${board.rCnt}"></td>
+				</tr>
+			</tbody>
+		</table>
+		
+		<nav th:with="startIdx = ${boardList.getPage()/pageCnt*pageCnt},
+			endIdx = ${startIdx+pageCnt-1 >= boardList.getPageCount()} ? 
+				${boardList.getPageCount()-1} : ${startIdx+pageCnt-1}">
+			<ul class="pagination">
+	
+				<li class="page-item">
+					<a class="page-link"
+						th:href="@{/board/{category}/page/{page}
+							(category=${category}, page=${startIdx-pageCnt+1})}"
+						th:style="${startIdx+1==1} ? 'display:none' : 'display:block'">
+						<span>&laquo;</span>
+				    </a>
+				</li>
+				
+				<li class="page-item">
+					<a class="page-link"
+						th:href="@{/board/{category}/page/{page}
+							(category=${category}, page=${boardList.getPage()})}"
+						th:style="${boardList.isFirstPage()} ? 'display:none' : 'display:block'">
+						<span>&lt;</span>
+				    </a>
+				</li>
+				
+				<li class="page-item" 
+					th:style="${startIdx >= pageCnt*2-2} ?
+						'display:block' : 'display:none'">
+					<a class="page-link"
+						th:href="@{/board/{category}/page/1
+							(category=${category})}">
+						<span>1</span>
+					</a>
+				</li>
+				
+				<li class="page-item"
+					th:style="${startIdx >= pageCnt*2-2} ?
+						'display:block' : 'display:none'">
+					<a class="page-link">
+						<span>...</span>
+					</a>
+				</li>
+				
+				<li class="page-item"
+					th:each="i : ${#numbers.sequence(startIdx, endIdx)}"
+					th:classappend="${boardList.getPage() == i} ? 'active' : ''">
+					
+					<a class="page-link"
+						th:href="@{/board/{category}/page/{page}
+							(category=${category}, page=${i+1})}">
+						<span th:text="${i+1}"></span>
+					</a>
+				</li>
+				
+				<li class="page-item"
+					th:style="${startIdx+pageCnt >= boardList.getPageCount()} ?
+							'display:none' : 'display:block'">
+					<a class="page-link">
+						<span>...</span>
+					</a>
+				</li>
+				
+				<li class="page-item" 
+					th:style="${startIdx+pageCnt >= boardList.getPageCount()} ?
+							'display:none' : 'display:block'">
+					<a class="page-link"
+						th:href="@{/board/{category}/page/{page}
+							(category=${category}, page=${boardList.getPageCount()})}">
+						<span th:text="${boardList.getPageCount()}"></span>
+					</a>
+				</li>
+	
+				<li>
+			      <a class="page-link"
+			      	th:href="@{/board/{category}/page/{page}
+			      		(category=${category}, page=${boardList.getPage()+2})}"
+			      	th:style="${boardList.isLastPage()} ? 'display:none' : 'display:block'">
+			        <span>&gt;</span>
+			      </a>
+			    </li>
+			    
+				<li class="page-item">
+					<a class="page-link"
+						th:href="@{/board/{category}/page/{page}
+							(category=${category}, page=${endIdx+2})}"
+						th:style="${startIdx+pageCnt >= boardList.getPageCount()} ?
+							'display:none' : 'display:block'">
+						<span>&raquo;</span>
+				    </a>
+				</li>
+			</ul>
+		</nav>
+		<a th:href="@{/board/insert}" class="btn btn-outline-primary" role="button">
+			글 쓰기
+		</a>
+		
+		</div>
+	
+	</div>
+</div>
+
+</body>
+
+</html>
